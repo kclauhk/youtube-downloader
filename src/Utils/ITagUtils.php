@@ -68,7 +68,7 @@ class ITagUtils
     }
 
     // itag info does not change frequently, that is why we cache it here as a plain static array
-    protected static array $itag_detailed = array(
+    private static array $itag_detailed = array(
         5 => 'flv, video, 240p, audio',
         6 => 'flv, video, 270p, audio',
         13 => '3gp, video, audio',
@@ -110,8 +110,8 @@ class ITagUtils
         160 => 'mp4, video, 144p',
         212 => 'mp4, video, 480p',
         264 => 'mp4, video, 1440p',
-        298 => 'mp4, video, 720p',
-        299 => 'mp4, video, 1080p',
+        298 => 'mp4, video, 720p',      // 60 FPS
+        299 => 'mp4, video, 1080p',     // 60 FPS
         266 => 'mp4, video, 2160p',
         139 => 'm4a, audio',
         140 => 'm4a, audio',
@@ -136,19 +136,49 @@ class ITagUtils
         248 => 'webm, video, 1080p',
         271 => 'webm, video, 1440p',
         272 => 'webm, video, 2160p',
-        302 => 'webm, video, 720p',
-        303 => 'webm, video, 1080p',
-        308 => 'webm, video, 1440p',
+        302 => 'webm, video, 720p',     // 60 FPS
+        303 => 'webm, video, 1080p',    // 60 FPS
+        308 => 'webm, video, 1440p',    // 60 FPS
         313 => 'webm, video, 2160p',
-        315 => 'webm, video, 2160p',
+        315 => 'webm, video, 2160p',    // 60 FPS
         171 => 'webm, audio',
         172 => 'webm, audio',
         249 => 'webm, audio',
         250 => 'webm, audio',
         251 => 'webm, audio',
-        394 => 'video',
-        395 => 'video',
-        396 => 'video',
-        397 => 'video',
+        600 => 'webm, audio',           // ultralow
+        599 => 'm4a, audio',            // ultralow
+        256 => 'm4a, audio',            // 6-CH
+        258 => 'm4a, audio',            // 6-CH
+        328 => 'm4a, audio',            // 6-CH, ec-3
+        380 => 'm4a, audio',            // 6-CH, ac-3
+        598 => 'webm, video, 144p',     // 15 FPS
+        330 => 'webm, video, 144p',     // 60 FPS, HDR
+        331 => 'webm, video, 240p',     // 60 FPS, HDR
+        332 => 'webm, video, 360p',     // 60 FPS, HDR
+        333 => 'webm, video, 480p',     // 60 FPS, HDR
+        334 => 'webm, video, 720p',     // 60 FPS, HDR
+        335 => 'webm, video, 1080p',    // 60 FPS, HDR
+        336 => 'webm, video, 1440p',    // 60 FPS, HDR
+        337 => 'webm, video, 2160p',    // 60 FPS, HDR
+        597 => 'mp4, video, 144p',      // 15 FPS
+        394 => 'mp4, video, 144p',      // AV1
+        395 => 'mp4, video, 240p',      // AV1
+        396 => 'mp4, video, 360p',      // AV1
+        397 => 'mp4, video, 480p',      // AV1
+        398 => 'mp4, video, 720p',      // AV1
+        399 => 'mp4, video, 1080p',     // AV1
+        400 => 'mp4, video, 1440p',     // AV1
+        401 => 'mp4, video, 2160p',     // AV1
+        571 => 'mp4, video, 4320p',     // AV1
+        694 => 'mp4, video, 144p',      // AV1, 60 FPS, HDR
+        695 => 'mp4, video, 240p',      // AV1, 60 FPS, HDR
+        696 => 'mp4, video, 360p',      // AV1, 60 FPS, HDR
+        697 => 'mp4, video, 480p',      // AV1, 60 FPS, HDR
+        698 => 'mp4, video, 720p',      // AV1, 60 FPS, HDR
+        699 => 'mp4, video, 1080p',     // AV1, 60 FPS, HDR
+        700 => 'mp4, video, 1440p',     // AV1, 60 FPS, HDR
+        701 => 'mp4, video, 2160p',     // AV1, 60 FPS, HDR
+        702 => 'mp4, video, 4320p',     // AV1, 60 FPS, HDR
     );
 }
