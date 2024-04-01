@@ -41,7 +41,7 @@ class YouTubeStreamer
         } else {
 
             // only headers we wish to forward back to the client
-            $forward = array('content-type', 'content-length', 'accept-ranges', 'content-range');
+            $forward = array('content-type', 'content-length', 'accept-ranges', 'content-range', 'last-modified');
 
             $parts = explode(':', $data, 2);
 
@@ -65,12 +65,12 @@ class YouTubeStreamer
         return strlen($data);
     }
 
-    public function stream(string $url): void
+    public function stream(string $url, array $headers = []): void
     {
         $ch = curl_init();
 
-        $headers = array();
-        $headers[] = 'User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0';
+        if (count(array_filter($headers, function($v) { return (strpos(strtolower($v), 'user-agent:') !== False); })) == 0)
+            $headers[] = 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
 
         if (isset($_SERVER['HTTP_RANGE'])) {
             $headers[] = 'Range: ' . $_SERVER['HTTP_RANGE'];
