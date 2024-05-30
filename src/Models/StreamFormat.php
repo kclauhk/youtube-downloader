@@ -16,6 +16,7 @@ class StreamFormat extends JsonObject
     public ?string $audioSampleRate = null;
     public ?string $url = null;
     public ?string $signatureCipher = null;
+    public ?bool $isDrc = null;
 
     public function getCleanMimeType(): ?string
     {
