@@ -21,35 +21,52 @@ class SignatureLinkParser
         // final response
         $return = array();
 
+        $decoded_nsig = array();
+
         foreach ($formats_combined as $format) {
 
-            // appear as either "cipher" or "signatureCipher"
-            $cipher = Utils::arrayGet($format, 'cipher', Utils::arrayGet($format, 'signatureCipher', ''));
-
-            // some videos do not need to be decrypted!
             if (isset($format['url'])) {
-                $return[] = new StreamFormat($format);
-                continue;
+                // appear as "url"
+                $url = $format['url'];
+            } else {
+                // appear as either "cipher" or "signatureCipher"
+                $cipher = Utils::arrayGet($format, 'cipher', Utils::arrayGet($format, 'signatureCipher', ''));
+
+                $cipherArray = Utils::parseQueryString($cipher);
+
+                // contains ?ip noting which IP can access it, and ?expire containing link expiration timestamp
+                $url = Utils::arrayGet($cipherArray, 'url');
+                $sp = Utils::arrayGet($cipherArray, 'sp'); // used to be 'sig'
+
+                // needs to be decrypted!
+                $signature = Utils::arrayGet($cipherArray, 's');
             }
-
-            $cipherArray = Utils::parseQueryString($cipher);
-
-            // contains ?ip noting which IP can access it, and ?expire containing link expiration timestamp
-            $url = Utils::arrayGet($cipherArray, 'url');
-            $sp = Utils::arrayGet($cipherArray, 'sp'); // used to be 'sig'
-
-            // needs to be decrypted!
-            $signature = Utils::arrayGet($cipherArray, 's');
 
             $streamUrl = new StreamFormat($format);
 
             if ($playerJs) {
+                if (preg_match('/&n=(.*?)&/', $url, $matches)) {
+                    // decrypt nsig using Deno
+                    if ((new Deno())->getApp()) {
+                        $n_param = $matches[1];
 
-                $decoded_signature = (new SignatureDecoder())->decode($signature, $playerJs->getResponseBody());
-                $decoded_url = $url . '&' . $sp . '=' . $decoded_signature;
+                        if (!array_key_exists($n_param, $decoded_nsig)) {
+                            $decoded_nsig[$n_param] = (new NSigDecoder())->decode($n_param, $playerJs->getResponseBody());
+                        }
 
-                $streamUrl->url = $decoded_url;
+                        $url = str_replace('&n=' . $n_param . '&', '&n=' . $decoded_nsig[$n_param] . '&', $url);
+                    }
+                }
 
+                if (isset($format['url'])) {
+                    // some videos do not need signature decryption
+                    $streamUrl->url = $url;
+                } else {
+                    $decoded_signature = (new SignatureDecoder())->decode($signature, $playerJs->getResponseBody());
+                    $decoded_url = $url . '&' . $sp . '=' . urlencode($decoded_signature);
+
+                    $streamUrl->url = $decoded_url;
+                }
             } else {
                 $streamUrl->url = $url;
             }
