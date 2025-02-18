@@ -1,3 +1,5 @@
+This is forked from [Athlon1600/youtube-downloader](https://github.com/Athlon1600/youtube-downloader)
+
 # YouTube Downloader
 
 [![Build Status](https://github.com/ytdl-org/youtube-dl/workflows/CI/badge.svg)](https://github.com/ytdl-org/youtube-dl/actions?query=workflow%3ACI)
@@ -32,8 +34,23 @@ We are not responsible for people who attempt to use this program in any way tha
 Recommended way of installing this is via [Composer](http://getcomposer.org):
 
 ```bash
-composer require athlon1600/youtube-downloader "^4.0"
+composer require kclauhk/youtube-downloader "^4.1.0"
 ```
+
+## Changes in this fork
+
+- Two YouTube clients (client id: "android_vr" and "ios") are built into YouTubeDownloader
+  - To specify a client
+    ```
+    $downloadOptions = $youtube->getDownloadLinks($url, "android_vr");
+    ```
+  - `$downloadOptions = $youtube->getDownloadLinks($url);` will use the default client "ios"
+- `StreamFormat` object now contains `audioTrack`, `indexRange` and `isDrc` properties
+- YouTubeStreamer accepts custom request headers (this can be used for streaming media from sources that require specific headers)
+  ```
+  $headers = array("origin: $origin", "referer: $referer");
+  $youtube->stream($url, $headers);
+  ```
 
 ## Example usage
 
@@ -92,7 +109,6 @@ $youtube = new YouTubeDownloader();
 $youtube->getBrowser()->consentCookies();
 ```
 
-
 ## How does it work
 
 A more detailed explanation on how to download videos from YouTube will be written soon.
@@ -110,9 +126,4 @@ https://github.com/Athlon1600/youtube-downloader/pull/25#issuecomment-439373506
 
 ## To-do list
 
-- Allow downloading of private videos.
-- Find a way to get around YouTube's throttling system that limits downloading speed to less than 100 kb/s for most most videos now...
-- Add ability to solve YouTube Captcha and avoid `HTTP 429 Too Many Requests` errors.
-- Add ability to download video and audio streams separately, and merge the two together using ffmpeg. Just like `youtube-dl` does!  
-- Optional command that finds ALL video formats.
-- ~~Fetch additional metadata about the video without using YouTube API.~~
+- 
