@@ -93,16 +93,12 @@ class YouTubeDownloader
                     ],
                 ],
             ],
-            // "android" client is broken and links expire after 30s
-            "android" => [
+            "tv" => [       // "tv" client requires nsig
                 "context" => [
                     "client" => [
-                        "androidSdkVersion" => 30,
-                        "clientName" => "ANDROID",
-                        "clientVersion" => "19.44.38",
-                        "osName" => "Android",
-                        "osVersion" => "11",
-                        "userAgent" => "com.google.android.youtube/19.44.38 (Linux; U; Android 11) gzip",
+                        "clientName" => "TVHTML5",
+                        "clientVersion" => "7.20250120.19.00",
+                        "userAgent" => "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/Version",
                     ],
                 ],
             ],
