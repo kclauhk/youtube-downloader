@@ -60,29 +60,30 @@ class YouTubeDownloader
     {
         $video_id = Utils::extractVideoId($url);
 
-        // exact params as used by youtube-dl... must be there for a reason
         $response = $this->client->get("https://www.youtube.com/watch?" . http_build_query([
                 'v' => $video_id,
-                'gl' => 'US',
-                'hl' => 'en',
-                'has_verified' => 1,
-                'bpctr' => 9999999999
             ]));
 
         return new WatchVideoPage($response);
     }
 
-    // Downloading android player API JSON
+    // Downloading player API JSON
     protected function getPlayerApiResponse(string $video_id, string $client_id, YouTubeConfigData $configData): PlayerApiResponse
     {
-        // exact params matter, because otherwise "slow" download links will be returned
-        // INNERTUBE_CLIENTS
+        // InnerTube Clients
+        // list of known clients: https://github.com/zerodytrash/YouTube-Internal-Clients
         $clients = [
-            "android_testsuite" => [
+            "android_vr" => [
                 "context" => [
                     "client" => [
-                        "clientName" => "ANDROID_TESTSUITE",
-                        "clientVersion" => "1.9",
+                        "androidSdkVersion" => 32,
+                        "clientName" => "ANDROID_VR",
+                        "clientVersion" => "1.60.19",
+                        "deviceMake" => "Oculus",
+                        "deviceModel" => "Quest 3",
+                        "osName" => "Android",
+                        "osVersion" => "12L",
+                        "userAgent" => "com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip",
                     ],
                 ],
             ],
@@ -92,56 +93,23 @@ class YouTubeDownloader
                     "client" => [
                         "androidSdkVersion" => 30,
                         "clientName" => "ANDROID",
-                        "clientVersion" => "19.09.37",
-                        "userAgent" => "com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip",
+                        "clientVersion" => "19.44.38",
+                        "osName" => "Android",
+                        "osVersion" => "11",
+                        "userAgent" => "com.google.android.youtube/19.44.38 (Linux; U; Android 11) gzip",
                     ],
                 ],
             ],
-            "android_music" => [
-                "context" => [
-                    "client" => [
-                        "androidSdkVersion" => 30,
-                        "clientName" => "ANDROID_MUSIC",
-                        "clientVersion" => "6.42.52",
-                        "userAgent" => "com.google.android.apps.youtube.music/6.42.52 (Linux; U; Android 11) gzip",
-                    ],
-                ],
-            ],
-            "android_creator" => [
-                "context" => [
-                    "client" => [
-                        "clientName" => "ANDROID_CREATOR",
-                        "clientVersion" => "22.30.100",
-                        "androidSdkVersion" => 30,
-                        "userAgent" => "com.google.android.apps.youtube.creator/22.30.100 (Linux; U; Android 11) gzip"
-                    ],
-                ],
-            ],
-            "ios" => [
+            "ios" => [      // upto 4K resolution (itag 401)
                 "context" => [
                     "client" => [
                         "clientName" => "IOS",
-                        "clientVersion" => "19.09.3",
-                        "deviceModel" => "iPhone14,3",
-                        "userAgent" => "com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)",
-                    ],
-                ],
-            ],
-            "web" => [
-                "context" => [
-                    "client" => [
-                        "clientName" => "WEB",
-                        //"clientVersion" => "2.20220801.00.00",
-                        "clientVersion" => "2.20240530.02.00",
-                    ],
-                ],
-            ],
-            // "tv_embedded" can access age restricted videos (unless the uploader has disabled the 'allow embedding' option)
-            "tv_embedded" => [
-                "context" => [
-                    "client" => [
-                        "clientName" => "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
-                        "clientVersion" => "2.0",
+                        "clientVersion" => "19.45.4",
+                        "deviceMake" => "Apple",
+                        "deviceModel" => "iPhone16,2",
+                        "osName" => "iPhone",
+                        "osVersion" => "18.1.0.22B83",
+                        "userAgent" => "com.google.ios.youtube/19.45.4 (iPhone16,2; U; CPU iOS 18_1_0 like Mac OS X;)",
                     ],
                 ],
             ],
@@ -182,7 +150,7 @@ class YouTubeDownloader
      * @throws VideoNotFoundException
      * @throws YouTubeException
      */
-    public function getDownloadLinks(string $video_id, $clients = ['android_testsuite'], array $extra = []): DownloadOptions
+    public function getDownloadLinks(string $video_id, $clients = 'ios', array $extra = []): DownloadOptions
     {
         $video_id = Utils::extractVideoId($video_id);
 
