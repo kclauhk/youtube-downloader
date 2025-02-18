@@ -28,6 +28,12 @@ class YouTubeDownloader
         return $this->client;
     }
 
+    // Specify Deno to be used to decrypt nsig
+    public function getDeno(): Deno
+    {
+        return new Deno();
+    }
+
     /**
      * @param string $query
      * @return array
