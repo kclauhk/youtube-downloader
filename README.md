@@ -16,7 +16,8 @@ but most of them haven't been updated in years, or they depend on youtube-dl its
 
 Pure PHP-based youtube downloaders that work, and are **kept-up-to date** just do not exist.
 
-This script uses no Javascript interpreters, no calls to shell... nothing but pure PHP with no heavy dependencies either.
+*If nsig decoding is not needed,*  
+this script uses no Javascript interpreters, no calls to shell... nothing but pure PHP with no heavy dependencies either.
 
 ![](https://i.imgur.com/YT39KZ5.png)
 
@@ -34,15 +35,25 @@ We are not responsible for people who attempt to use this program in any way tha
 Recommended way of installing this is via [Composer](http://getcomposer.org):
 
 ```bash
-composer require kclauhk/youtube-downloader "^4.1.0"
+composer require kclauhk/youtube-downloader "^4.2.0"
 ```
 
 ## Changes in this fork
 
+### nsig decoding is supported
+[Deno](https://deno.com/) (an open-source JavaScript runtime) is required for nsig decoding.  
+To use this project with Deno, you can either
+- place the Deno executable into the folder "youtube-downloader/src"; or
+- specify the path of the folder containing the executable by  
+  `$youtube->getDeno()->setPath($path);`
+
+Hence, "TVHTML5" client, which require nsig, is added (client id: "tv")
+
+### Changes since [v4.1.0](https://github.com/kclauhk/youtube-downloader/releases/tag/v4.1.0)
 - Two YouTube clients (client id: "android_vr" and "ios") are built into YouTubeDownloader
   - To specify a client
     ```
-    $downloadOptions = $youtube->getDownloadLinks($url, "android_vr");
+    $downloadOptions = $youtube->getDownloadLinks($url, $client_id);
     ```
   - `$downloadOptions = $youtube->getDownloadLinks($url);` will use the default client "ios"
 - `StreamFormat` object now contains `audioTrack`, `indexRange` and `isDrc` properties
@@ -126,4 +137,4 @@ https://github.com/Athlon1600/youtube-downloader/pull/25#issuecomment-439373506
 
 ## To-do list
 
-- 
+- allow user-provided player client
