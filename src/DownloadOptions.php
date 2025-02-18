@@ -13,12 +13,16 @@ class DownloadOptions
     private array $formats = [];
 
     /** @var VideoInfo|null */
-    private ?VideoInfo $info;
+    private VideoInfo $info;
 
-    public function __construct(array $formats, ?VideoInfo $info = null)
+    /** @var array|null */
+    private ?array $captions;
+
+    public function __construct(array $formats, VideoInfo $info = null, ?array $captions = null)
     {
         $this->formats = $formats;
         $this->info = $info;
+        $this->captions = $captions;
     }
 
     /**
@@ -32,9 +36,17 @@ class DownloadOptions
     /**
      * @return VideoInfo|null
      */
-    public function getInfo(): ?VideoInfo
+    public function getInfo(): VideoInfo
     {
         return $this->info;
+    }
+
+    /**
+     * @return array|null
+     */
+    public function getCaptions(): ?array
+    {
+        return $this->captions;
     }
 
     // Will not include Videos with Audio
