@@ -2,6 +2,8 @@
 
 namespace YouTube;
 
+use YouTube\Exception\YouTubeException;
+
 class Deno
 {
     protected static $_deno_dir;
@@ -25,11 +27,22 @@ class Deno
             $files = glob(__DIR__ . DIRECTORY_SEPARATOR . 'deno{.exe,}', GLOB_BRACE);
         }
 
-        if ($files) {
-            static::$_deno_app = $files[0];
-            return static::$_deno_app;
-        }
+        try {
+            if ($files) {
+                foreach ($files as $file) {
+                    if (is_executable($file)) {
+                        static::$_deno_app = $file;
+                        return static::$_deno_app;
+                    }
+                }
+                throw new YouTubeException("Failed to run {$files[0]}");
+            } else {
+                throw new YouTubeException('Deno not found');
+            }
+        } catch (YouTubeException $e) {
+            throw new YouTubeException($e->getMessage());
 
-        return null;
+            return null;
+        }
     }
 }

@@ -2,6 +2,8 @@
 
 namespace YouTube;
 
+use YouTube\Exception\YouTubeException;
+
 class NSigDecoder
 {
     /**
@@ -11,21 +13,26 @@ class NSigDecoder
      */
     public function decode(string $n_param, string $js_code): string
     {
-        $func_name = $this->parseFunctionName($js_code);
+        try {
+            $func_name = $this->parseFunctionName($js_code);
 
-        if (!$func_name) {
-            //Could not parse n function name
+            if (!$func_name) {
+                throw new YouTubeException('Failed to extract n function name');
+            }
+
+            $func_code = $this->extractFunctionCode($func_name, $js_code);
+
+            if (!$func_code) {
+                throw new YouTubeException('Failed to extract n function code');
+            }
+
+            return $this->decryptNsig($n_param, $func_code);
+
+        } catch (YouTubeException $e) {
+            throw new YouTubeException($e->getMessage());
+
             return $n_param;
         }
-
-        $func_code = $this->extractFunctionCode($func_name, $js_code);
-
-        if (!$func_code) {
-            //Could not parse n function code
-            return $n_param;
-        }
-
-        return $this->decryptNsig($n_param, $func_code);
     }
 
     protected function parseFunctionName(string $js_code): ?string
@@ -60,15 +67,22 @@ class NSigDecoder
 
             $func_name = substr($func_code, 0, strpos($func_code, '=function'));
 
-            if (file_put_contents("$cache_path.dump", 'var ' . preg_replace('@if\(typeof \w+==="undefined"\)return C;@is', '', $func_code) . "console.log($func_name('$n_param'));") === false) {
-                throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());
+            try {
+                if (file_put_contents("$cache_path.dump", 'var ' . preg_replace('@if\(typeof \w+==="undefined"\)return C;@is', '', $func_code) . "console.log($func_name('$n_param'));") === false) {
+                    throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());
 
-            } else {
-                exec($deno . " run $cache_path.dump >$cache_path.nsig.tmp");
-                $nsig = trim(file_get_contents("$cache_path.nsig.tmp"));
+                } else {
+                    exec($deno . " run $cache_path.dump >$cache_path.nsig.tmp");
+                    $nsig = trim(file_get_contents("$cache_path.nsig.tmp"));
 
-                unlink("$cache_path.dump");
-                unlink("$cache_path.nsig.tmp");
+                    unlink("$cache_path.dump");
+                    unlink("$cache_path.nsig.tmp");
+                }
+                if (!$nsig) {
+                    throw new YouTubeException('Failed to decrypt nsig');
+                }
+            } catch (YouTubeException $e) {
+                throw new YouTubeException($e->getMessage());
             }
         }
 

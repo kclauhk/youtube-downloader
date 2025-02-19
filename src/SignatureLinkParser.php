@@ -2,6 +2,7 @@
 
 namespace YouTube;
 
+use YouTube\Exception\YouTubeException;
 use YouTube\Models\StreamFormat;
 use YouTube\Responses\PlayerApiResponse;
 use YouTube\Responses\VideoPlayerJs;
@@ -47,14 +48,19 @@ class SignatureLinkParser
             if ($playerJs) {
                 if (preg_match('/&n=(.*?)&/', $url, $matches)) {
                     // decrypt nsig using Deno
-                    if ((new Deno())->getApp()) {
-                        $n_param = $matches[1];
+                    try {
+                        if ((new Deno())->getApp()) {
+                            $n_param = $matches[1];
 
-                        if (!array_key_exists($n_param, $decoded_nsig)) {
-                            $decoded_nsig[$n_param] = (new NSigDecoder())->decode($n_param, $playerJs->getResponseBody());
+                            if (!array_key_exists($n_param, $decoded_nsig)) {
+                                $decoded_nsig[$n_param] = (new NSigDecoder())->decode($n_param, $playerJs->getResponseBody());
+                            }
+                            if ($decoded_nsig[$n_param] != $n_param) {
+                                $url = str_replace('&n=' . $n_param . '&', '&n=' . $decoded_nsig[$n_param] . '&', $url);
+                            }
                         }
-
-                        $url = str_replace('&n=' . $n_param . '&', '&n=' . $decoded_nsig[$n_param] . '&', $url);
+                    } catch (YouTubeException $e) {
+                        $streamUrl->_error = 'Unable to decrypt nsig: ' . $e->getMessage() . '. This URL may yield HTTP Error 403.';
                     }
                 }
 
