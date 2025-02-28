@@ -28,6 +28,12 @@ class YouTubeDownloader
         return $this->client;
     }
 
+    // Specify the JavaScript runtime for nsig decryption
+    public function getJsrt(): JsRuntime
+    {
+        return new JsRuntime();
+    }
+
     /**
      * @param string $query
      * @return array
