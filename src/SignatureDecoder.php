@@ -82,10 +82,13 @@ class SignatureDecoder
         // extract code block from that function
         // single quote in case function name contains $dollar sign
         // xm=function(a){a=a.split("");wm.zO(a,47);wm.vY(a,1);wm.z9(a,68);wm.zO(a,21);wm.z9(a,34);wm.zO(a,16);wm.z9(a,41);return a.join("")};
-        if (preg_match('/' . $func_name . '=function\(\S+\){(.*?)}/', $player_html, $matches)) {
-
+        if (preg_match('/function\s+' . $func_name . '.*{(.*?)}/', $player_html, $matches)) {
             $js_code = $matches[1];
+        } else if (preg_match('/' . $func_name . '=\s*function\s*\(\s*\S+\s*\)\s*{(.*?)}/', $player_html, $matches)) {
+            $js_code = $matches[1];
+        }
 
+        if ($js_code) {
             // extract all relevant statements within that block
             // wm.vY(a,1);
             if (preg_match_all('/([a-z0-9$]{2})\.([a-z0-9]{2})\([^,]+,(\d+)\)/i', $js_code, $matches) != false) {
