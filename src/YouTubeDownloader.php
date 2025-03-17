@@ -20,7 +20,7 @@ class YouTubeDownloader
     function __construct()
     {
         $this->client = new Browser();
-        $this->api_clients = new InnerTubeClients();
+        $this->api_clients = new PlayerApiClients();
     }
 
     // Specify network options to be used in all network requests
@@ -36,7 +36,7 @@ class YouTubeDownloader
     }
 
     // Specify client for video data request
-    public function getApiClients(): InnerTubeClients
+    public function getApiClients(): PlayerApiClients
     {
         return $this->api_clients;
     }
