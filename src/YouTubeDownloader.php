@@ -97,8 +97,10 @@ class YouTubeDownloader
         if (isset($clients[$client_id]['config_url'])) {
             $response = $this->client->get($clients[$client_id]['config_url']);
             $config = new WatchVideoPage($response);
-            $configData = $config->getYouTubeConfigData();
-            $clients[$client_id]['context'] = $configData->deepGet('INNERTUBE_CONTEXT');
+            if (!empty($config->getYouTubeConfigData())) {
+                $configData = $config->getYouTubeConfigData();
+                $clients[$client_id]['context'] = $configData->deepGet('INNERTUBE_CONTEXT');
+            }
         }
 
         foreach(['hl' => 'en', 'timeZone' => 'UTC', 'utcOffsetMinutes' => 0] as $k => $v){
