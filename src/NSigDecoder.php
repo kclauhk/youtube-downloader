@@ -45,13 +45,19 @@ class NSigDecoder
 
     protected function extractFunctionCode(string $func_name, string $js_code): ?string
     {
-        if (preg_match('@(function\s+' . $func_name . '\s*\([\s\S]*?})\s+function@is', $js_code, $matches)) {
-            $func_code = $matches[1];
-        } else if (preg_match('@' . $func_name . '\s*=\s*function\s*\(\s*\w+\s*\)\s*{[\s\S]+?};@is', $js_code, $matches)) {
-            $func_code = 'var ' . $matches[0];
+        $var_code = '';
+        if (preg_match('@(?:[;\s]|^)\s*(var\s*[\w$]+\s*=\s*"(?:\\"|[^"])+?"\s*\.\s*split\("\W+"\))(?=\s*[,;])@is', $js_code, $matches)) {
+            $var_code = $matches[1] . ";\n";
         }
 
-        return preg_replace('@;\s*if\s*\(\s*typeof\s+[a-zA-Z0-9_$]+\s*===?\s*(["\'])undefined\1\s*\)\s*return\s+[\$\w]+;@is', ';', $func_code);
+        if (preg_match('@' . $func_name . '\s*=\s*function\s*\(\s*\w+\s*\)\s*{[\s\S]+?};@is', $js_code, $matches)) {
+            $func_code = 'var ' . $matches[0];
+        } else if (preg_match('@(function\s+' . $func_name . '\s*\([\s\S]*?})\s+function@is', $js_code, $matches)) {
+            $func_code = $matches[1];
+        }
+
+        return $var_code .
+            preg_replace('@;\s*if\s*\(\s*typeof\s+[a-zA-Z0-9_$]+\s*===?\s*(?:(["\'])undefined\1|[\$\w]+\[\d+\])\s*\)\s*return\s+[\$\w]+;@is', ';', $func_code);
     }
 
     protected function decryptNsig(string $n_param, string $func_name, string $func_code): string
