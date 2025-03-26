@@ -57,7 +57,7 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'TVHTML5',
-                        'clientVersion' => '7.20250319.10.00',
+                        'clientVersion' => '7.20250324.11.00',
                         'userAgent' => 'Mozilla/5.0 (ChromiumStylePlatform) Cobalt/Version',
                     ],
                 ],

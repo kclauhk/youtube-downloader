@@ -46,7 +46,7 @@ class NSigDecoder
     protected function extractFunctionCode(string $func_name, string $js_code): ?string
     {
         $var_code = '';
-        if (preg_match('@(?:[;\s]|^)\s*(var\s*[\w$]+\s*=\s*"(?:\\"|[^"])+?"\s*\.\s*split\("\W+"\))(?=\s*[,;])@is', $js_code, $matches)) {
+        if (preg_match('@;\s*(?P<code>var\s+[\w$]+\s*=\s*(?P<q2>["\'])(?:(?!(?P=q2)).|\\.)+(?P=q2)\.split\((?P<q3>["\'])(?:(?!(?P=q3)).)+(?P=q3)\)|\[\s*(?:(?P<q4>["\'])(?:(?!(?P=q4)).|\\.)*(?P=q4)\s*,?\s*)+\])[;,]@is', $js_code, $matches)) {
             $var_code = $matches[1] . ";\n";
         }
 
