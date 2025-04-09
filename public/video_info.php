@@ -20,7 +20,7 @@ if (!$url) {
 $youtube = new \YouTube\YouTubeDownloader();
 
 try {
-    $links = $youtube->getDownloadLinks($url);
+    $links = $youtube->getDownloadLinks($url, 'android_vr');
 
     $best = $links->getFirstCombinedFormat();
 
