@@ -27,6 +27,8 @@ class VideoInfo
     // in seconds
     public ?int $durationSeconds = null;
 
+    public ?array $chapters = null;
+
     // tags?
     public array $keywords = [];
 
