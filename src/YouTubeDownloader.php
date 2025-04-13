@@ -151,10 +151,10 @@ class YouTubeDownloader
             throw new TooManyRequestsException($page);
         } elseif (!$page->isStatusOkay()) {
             throw new YouTubeException('Page failed to load. HTTP error: ' . $page->getResponse()->error);
-        } elseif ($page->isVideoNotFound()) {
-            throw new VideoNotFoundException();
         } elseif ($page->getPlayerResponse()->getPlayabilityStatusReason()) {
             throw new YouTubeException($page->getPlayerResponse()->getPlayabilityStatusReason());
+        } elseif ($page->isVideoNotFound()) {
+            throw new VideoNotFoundException();
         }
 
         // a giant JSON object holding useful data
@@ -201,7 +201,7 @@ class YouTubeDownloader
         }
 
         // since we already have that information anyways...
-        $info = VideoInfoMapper::fromInitialPlayerResponse($page->getPlayerResponse());
+        $info = $page->getVideoInfo();
         $captions = $this->getCaptions($page->getPlayerResponse());
 
         return new DownloadOptions($links, $info, $captions);

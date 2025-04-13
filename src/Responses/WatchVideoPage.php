@@ -2,6 +2,7 @@
 
 namespace YouTube\Responses;
 
+use YouTube\Models\Chapter;
 use YouTube\Models\InitialPlayerResponse;
 use YouTube\Models\VideoInfo;
 use YouTube\Models\YouTubeConfigData;
@@ -13,6 +14,7 @@ class WatchVideoPage extends HttpResponse
     const REGEX_YTCFG = '/ytcfg\.set\s*\(\s*({.+})\s*\)\s*;/i';
     const REGEX_INITIAL_PLAYER_RESPONSE = '/ytInitialPlayerResponse\s*=\s*({.+})\s*;/i';
     const REGEX_INITIAL_DATA = '/ytInitialData\s*=\s*({.+})\s*;/i';
+    const REGEX_MARKERS_MAP = '/markersMap"\s*:\s*\[\s*\{.+?(\{"chapters"\s*:\s*\[\s*\{.+?\}\}\})\}(?:\]\s*,\s*"|,\s*\{)/i';
 
     public function isTooManyRequests(): bool
     {
@@ -95,7 +97,35 @@ class WatchVideoPage extends HttpResponse
         $playerResponse = $this->getPlayerResponse();
 
         if ($playerResponse) {
-            return VideoInfoMapper::fromInitialPlayerResponse($playerResponse);
+            $result = VideoInfoMapper::fromInitialPlayerResponse($playerResponse);
+
+            $chapters = $this->getChapterInfo();
+            if (!empty($chapters)) {
+                $result->chapters = $chapters;
+            }
+
+            return $result;
+        }
+
+        return null;
+    }
+
+    /**
+     * Parse chapter info from this page without making any additional requests
+     * @return array|null;
+     */
+    protected function getChapterInfo(): ?array
+    {
+        if (preg_match(self::REGEX_MARKERS_MAP, $this->getResponseBody(), $matches)) {
+            foreach (json_decode($matches[1], JSON_OBJECT_AS_ARRAY)['chapters'] as $chapter) {
+                $ch = new Chapter();
+                $ch->title = Utils::arrayGet($chapter, 'chapterRenderer.title');
+                $ch->timeRangeStartMillis = Utils::arrayGet($chapter, 'chapterRenderer.timeRangeStartMillis');
+                $ch->thumbnails = Utils::arrayGet($chapter, 'chapterRenderer.thumbnail.thumbnails');
+                $result[] = $ch;
+            }
+
+            return $result;
         }
 
         return null;
