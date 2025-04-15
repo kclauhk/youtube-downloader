@@ -24,7 +24,7 @@ class InitialPlayerResponse extends JsonObject
      */
     public function getPlayabilityStatusReason(): ?string
     {
-        return $this->deepGet('playabilityStatus.reason');
+        return ((array)$this->deepGet('playabilityStatus.messages'))[0] ?: $this->deepGet('playabilityStatus.reason');
     }
 
     public function getVideoDetails(): ?array

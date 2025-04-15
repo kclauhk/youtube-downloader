@@ -36,7 +36,7 @@ class NSigDecoder
             $func_name = preg_quote($matches['name']);
         }
 
-        if (preg_match('@var\s+' . $func_name . '=\[(\S+)\];@is', $js_code, $matches)) {
+        if (preg_match('@var\s+' . $func_name . '=\[(\S+)\];@', $js_code, $matches)) {
             return preg_quote($matches[1]);
         }
 
@@ -50,9 +50,9 @@ class NSigDecoder
             $var_code = $matches['code'] . ";\n";
         }
 
-        if (preg_match('@' . $func_name . '\s*=\s*function\s*\(\s*\w+\s*\)\s*{[\s\S]+?};@is', $js_code, $matches)) {
+        if (preg_match('@' . $func_name . '\s*=\s*function\s*\(\s*\w+\s*\)\s*{[\s\S]+?};@', $js_code, $matches)) {
             $func_code = 'var ' . $matches[0];
-        } else if (preg_match('@(function\s+' . $func_name . '\s*\([\s\S]*?})\s+function@is', $js_code, $matches)) {
+        } else if (preg_match('@(function\s+' . $func_name . '\s*\([\s\S]*?})\s+function@', $js_code, $matches)) {
             $func_code = $matches[1];
         }
 
