@@ -168,7 +168,7 @@ class YouTubeDownloader
             $player_response = $this->getPlayerApiResponse($video_id, strtolower($client_id), $youtube_config_data);
 
             // throws exception if player response does not belong to the requested video
-            preg_match('/"videoId":\s"([^"]+)"/', print_r($player_response, true), $matches);
+            preg_match('/videoId"\s*:\s*"([^"]+)"/', print_r($player_response, true), $matches);
             if (($matches[1] ?? '') != $video_id)
                 throw new YouTubeException('Invalid player response: got player response for video "' . ($matches[1] ?? '') . '" instead of "' . $video_id .'"');
 

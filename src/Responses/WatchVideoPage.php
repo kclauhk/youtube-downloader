@@ -11,10 +11,10 @@ use YouTube\Utils\Utils;
 
 class WatchVideoPage extends HttpResponse
 {
-    const REGEX_YTCFG = '/ytcfg\.set\s*\(\s*({.+})\s*\)\s*;/i';
-    const REGEX_INITIAL_PLAYER_RESPONSE = '/ytInitialPlayerResponse\s*=\s*({.+})\s*;/i';
-    const REGEX_INITIAL_DATA = '/ytInitialData\s*=\s*({.+})\s*;/i';
-    const REGEX_MARKERS_MAP = '/markersMap"\s*:\s*\[\s*\{.+?(\{"chapters"\s*:\s*\[\s*\{.+?\}\}\})\}(?:\]\s*,\s*"|,\s*\{)/i';
+    const REGEX_YTCFG = '/ytcfg\.set\s*\(\s*({.+})\s*\)\s*;/';
+    const REGEX_INITIAL_PLAYER_RESPONSE = '/ytInitialPlayerResponse\s*=\s*({.+})\s*;/';
+    const REGEX_INITIAL_DATA = '/ytInitialData\s*=\s*({.+})\s*;/';
+    const REGEX_MARKERS_MAP = '/markersMap"\s*:\s*\[\s*\{.+?(\{"chapters"\s*:\s*\[\s*\{.+?\}\}\})\}(?:\]\s*,\s*"|,\s*\{)/';
 
     public function isTooManyRequests(): bool
     {
@@ -57,7 +57,7 @@ class WatchVideoPage extends HttpResponse
         if (preg_match(self::REGEX_INITIAL_PLAYER_RESPONSE, $this->getResponseBody(), $matches)) {
             $data = json_decode($matches[1], true);
         }
-        if (empty($data) && preg_match('/ytInitialPlayerResponse\s*=\s*({.+?})\s*;/i', $this->getResponseBody(), $matches)) {
+        if (empty($data) && preg_match('/ytInitialPlayerResponse\s*=\s*({.+?})\s*;/', $this->getResponseBody(), $matches)) {
             $data = json_decode($matches[1], true);
         }
         if (!empty($data)) {
