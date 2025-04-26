@@ -2,6 +2,8 @@
 
 namespace YouTube;
 
+use YouTube\Exception\YouTubeException;
+
 /*
  *
  * Go into YouTube's player.js, find a code that looks like this:
@@ -42,22 +44,29 @@ class SignatureDecoder
             return null;
         }
 
-        foreach ($instructions as $opt) {
+        if ($instructions['type'] == 'instructions') {
+            foreach ($instructions[0] as $opt) {
 
-            $command = $opt[0];
-            $value = $opt[1];
+                $command = $opt[0];
+                $value = $opt[1];
 
-            if ($command == 'swap') {
+                if ($command == 'swap') {
 
-                $temp = $signature[0];
-                $signature[0] = $signature[$value % strlen($signature)];
-                $signature[$value] = $temp;
+                    $temp = $signature[0];
+                    $signature[0] = $signature[$value % strlen($signature)];
+                    $signature[$value] = $temp;
 
-            } elseif ($command == 'splice') {
-                $signature = substr($signature, $value);
-            } elseif ($command == 'reverse') {
-                $signature = strrev($signature);
+                } elseif ($command == 'splice') {
+                    $signature = substr($signature, $value);
+                } elseif ($command == 'reverse') {
+                    $signature = strrev($signature);
+                }
             }
+
+        } else if ($instructions['type'] == 'js') {
+            $func_code = implode(";\n", $instructions[0]) . ";\n";
+
+            $signature = $this->decryptSignature($signature, $func_name, $func_code);
         }
 
         return trim($signature);
@@ -84,8 +93,10 @@ class SignatureDecoder
         // xm=function(a){a=a.split("");wm.zO(a,47);wm.vY(a,1);wm.z9(a,68);wm.zO(a,21);wm.z9(a,34);wm.zO(a,16);wm.z9(a,41);return a.join("")};
         if (preg_match('/function\s+' . $func_name . '.*{(.*?)}/', $player_html, $matches)) {
             $js_code = $matches[1];
+            $js_func = $matches[0];
         } else if (preg_match('/' . $func_name . '=\s*function\s*\(\s*\S+\s*\)\s*{(.*?)}/', $player_html, $matches)) {
             $js_code = $matches[1];
+            $js_func = 'var ' . $matches[0];
         }
 
         if ($js_code) {
@@ -123,10 +134,59 @@ class SignatureDecoder
                     $instructions[] = array($functions[$name], $matches[3][$index]);
                 }
 
-                return $instructions;
+                return array($instructions, 'type' => 'instructions');
+
+            } else if (preg_match_all('/[;{]([\w$]+)\[/', $js_code, $matches)) {
+
+                if ((new JsRuntime())->getApp()) {
+
+                    $fn_names = array_unique($matches[1]);
+
+                    $instructions = array();
+
+                    foreach ($fn_names as $fn_name) {
+                        if (preg_match("@(?:(?:var|const|let)\s+{$fn_name}\s*=|(?:function\s+{$fn_name}|[{;,]\s*{$fn_name}\s*=\s*function|(?:var|const|let)\s+{$fn_name}\s*=\s*function)\s*\([^)]*\))\s*{.+?};@xs", $player_html, $matches)) {
+                            $instructions[] = $matches[0];
+                        }
+                    }
+
+                    if (preg_match('@(?P<q1>["\'])use\s+strict(?P=q1);\s*(?P<code>var\s+(?P<name>[\w$]+)\s*=\s*(?P<value>(?P<q2>["\'])(?:(?!(?P=q2)).|\\.)+(?P=q2)\.split\((?P<q3>["\'])(?:(?!(?P=q3)).)+(?P=q3)\)|\[\s*(?:(?P<q4>["\'])(?:(?!(?P=q4)).|\\.)*(?P=q4)\s*,?\s*)+\]))[;,]@x', $player_html, $matches)) {
+                        $instructions[] = $matches['code'];
+                    }
+
+                    $instructions[] = $js_func;
+
+                    return array($instructions, 'type' => 'js');
+
+                }
             }
         }
 
         return null;
+    }
+
+    protected function decryptSignature(string $signature, string $func_name, string $func_code): ?string
+    {
+        $jsrt = new JsRuntime();
+
+        if ($jsrt->getApp()) {
+            $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . $func_name;
+
+            if (file_put_contents("{$cache_path}.dump", $func_code . "console.log({$func_name}('{$signature}'));") === false) {
+                throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());
+
+            } else {
+                exec($jsrt->getApp() . ' ' . $jsrt->getCmd() . " {$cache_path}.dump >{$cache_path}.sig.tmp");
+                $sig = trim(file_get_contents("{$cache_path}.sig.tmp"));
+
+                unlink("{$cache_path}.dump");
+                unlink("{$cache_path}.sig.tmp");
+            }
+            if (!$sig || ($sig == $signature)) {
+                throw new YouTubeException('Failed to decrypt signature');
+            }
+        }
+
+        return $sig ?: null;
     }
 }
