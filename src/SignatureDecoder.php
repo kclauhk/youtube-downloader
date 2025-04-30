@@ -22,6 +22,9 @@ and translate it to PHP
 
 class SignatureDecoder
 {
+    private string $s_func_name = '';
+    private array  $instructions = [];
+
     /**
      * @param string $signature
      * @param string $js_code Complete source code for YouTube's player.js
@@ -29,23 +32,24 @@ class SignatureDecoder
      */
     public function decode(string $signature, string $js_code): ?string
     {
-        $func_name = $this->parseFunctionName($js_code);
+        if (count($this->instructions) === 0) {
+            $this->s_func_name = $this->parseFunctionName($js_code);
 
-        if (!$func_name) {
-            //Could not parse signature function name
-            return null;
+            if (!$this->s_func_name) {
+                //Could not parse signature function name
+                return null;
+            }
+
+            $this->instructions = (array)$this->parseFunctionCode($this->s_func_name, $js_code);
         }
 
-        // PHP instructions
-        $instructions = (array)$this->parseFunctionCode($func_name, $js_code);
-
-        if (count($instructions) === 0) {
+        if (count($this->instructions) === 0) {
             // Could not parse any signature instructions
             return null;
         }
 
-        if ($instructions['type'] == 'instructions') {
-            foreach ($instructions[0] as $opt) {
+        if ($this->instructions['type'] == 'instructions') {
+            foreach ($this->instructions[0] as $opt) {
 
                 $command = $opt[0];
                 $value = $opt[1];
@@ -63,10 +67,10 @@ class SignatureDecoder
                 }
             }
 
-        } else if ($instructions['type'] == 'js') {
-            $func_code = implode(";\n", $instructions[0]) . ";\n";
+        } else if ($this->instructions['type'] == 'js') {
+            $func_code = implode(";\n", $this->instructions[0]) . ";\n";
 
-            $signature = $this->decryptSignature($signature, $func_name, $func_code);
+            $signature = $this->decryptSignature($signature, $this->s_func_name, $func_code);
         }
 
         return trim($signature);
@@ -150,7 +154,8 @@ class SignatureDecoder
                         }
                     }
 
-                    if (preg_match('@(?P<q1>["\'])use\s+strict(?P=q1);\s*(?P<code>var\s+(?P<name>[\w$]+)\s*=\s*(?P<value>(?P<q2>["\'])(?:(?!(?P=q2)).|\\.)+(?P=q2)\.split\((?P<q3>["\'])(?:(?!(?P=q3)).)+(?P=q3)\)|\[\s*(?:(?P<q4>["\'])(?:(?!(?P=q4)).|\\.)*(?P=q4)\s*,?\s*)+\]))[;,]@x', $player_html, $matches)) {
+                    //                                                                                               here simplified  vv
+                    if (preg_match('@(?P<q1>["\'])use\s+strict(?P=q1);\s*(?P<code>var\s+(?P<name>[\w$]+)\s*=\s*(?P<value>(?P<q2>["\']).+(?P=q2)\.split\((?P<q3>["\'])(?:(?!(?P=q3)).)+(?P=q3)\)|\[\s*(?:(?P<q4>["\'])(?:(?!(?P=q4)).|\\.)*(?P=q4)\s*,?\s*)+\]))[;,]@x', $player_html, $matches)) {
                         $instructions[] = $matches['code'];
                     }
 
@@ -167,6 +172,8 @@ class SignatureDecoder
 
     protected function decryptSignature(string $signature, string $func_name, string $func_code): ?string
     {
+        $func_name = stripslashes($func_name);
+
         $jsrt = new JsRuntime();
 
         if ($jsrt->getApp()) {

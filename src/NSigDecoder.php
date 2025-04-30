@@ -6,6 +6,9 @@ use YouTube\Exception\YouTubeException;
 
 class NSigDecoder
 {
+    private string $n_func_name = '';
+    private string $n_func_code = '';
+
     /**
      * @param string $n_param
      * @param string $js_code Complete source code for YouTube's player.js
@@ -13,19 +16,21 @@ class NSigDecoder
      */
     public function decode(string $n_param, string $js_code): string
     {
-        $func_name = $this->parseFunctionName($js_code);
+        if (empty($this->n_func_code)) {
+            $this->n_func_name = $this->parseFunctionName($js_code);
 
-        if (!$func_name) {
-            throw new YouTubeException('Failed to extract n function name');
+            if (!$this->n_func_name) {
+                throw new YouTubeException('Failed to extract n function name');
+            }
+
+            $this->n_func_code = $this->extractFunctionCode($this->n_func_name, $js_code);
         }
 
-        $func_code = $this->extractFunctionCode($func_name, $js_code);
-
-        if (!$func_code) {
+        if (!$this->n_func_code) {
             throw new YouTubeException('Failed to extract n function code');
         }
 
-        return $this->decryptNsig($n_param, $func_name, $func_code);
+        return $this->decryptNsig($n_param, $this->n_func_name, $this->n_func_code);
     }
 
     protected function parseFunctionName(string $js_code): ?string
@@ -48,12 +53,13 @@ class NSigDecoder
     protected function extractFunctionCode(string $func_name, string $js_code): ?string
     {
         $var_code = '';
-        if (preg_match('@(?P<q1>["\'])use\s+strict(?P=q1);\s*(?P<code>var\s+(?P<name>[\w$]+)\s*=\s*(?P<value>(?P<q2>["\'])(?:(?!(?P=q2)).|\\.)+(?P=q2)\.split\((?P<q3>["\'])(?:(?!(?P=q3)).)+(?P=q3)\)|\[\s*(?:(?P<q4>["\'])(?:(?!(?P=q4)).|\\.)*(?P=q4)\s*,?\s*)+\]))[;,]@x', $js_code, $matches)) {
+        //                                                                                               here simplified  vv
+        if (preg_match('@(?P<q1>["\'])use\s+strict(?P=q1);\s*(?P<code>var\s+(?P<name>[\w$]+)\s*=\s*(?P<value>(?P<q2>["\']).+(?P=q2)\.split\((?P<q3>["\'])(?:(?!(?P=q3)).)+(?P=q3)\)|\[\s*(?:(?P<q4>["\'])(?:(?!(?P=q4)).|\\.)*(?P=q4)\s*,?\s*)+\]))[;,]@x', $js_code, $matches)) {
             $var_code = $matches['code'] . ";\n";
         }
 
         if (preg_match("@[{;,]\s*((?:function\s+{$func_name}|{$func_name}\s*=\s*function|(?:var|const|let)\s+{$func_name}\s*=\s*function)\s*\([^\)]*\)\s*{.+?};)@xs", $js_code, $matches)) {
-            $func_code = (strpos($matches[1], $func_name) === 0 ? 'var ' : '') . $matches[1];
+            $func_code = (strpos($matches[1], stripslashes($func_name)) === 0 ? 'var ' : '') . $matches[1];
         } else if (preg_match('@(function\s+' . $func_name . '\s*\([\s\S]*?})\s+function@', $js_code, $matches)) {
             $func_code = $matches[1];
         }
@@ -64,7 +70,10 @@ class NSigDecoder
 
     protected function decryptNsig(string $n_param, string $func_name, string $func_code): string
     {
+        $func_name = stripslashes($func_name);
+
         $jsrt = new JsRuntime();
+
         if ($jsrt->getApp()) {
             $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . $n_param;
 

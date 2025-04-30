@@ -22,6 +22,8 @@ class SignatureLinkParser
         // final response
         $return = array();
 
+        $s_decoder = new SignatureDecoder();
+        $n_decoder = new NSigDecoder();
         $decoded_nsig = array();
 
         foreach ($formats_combined as $format) {
@@ -53,7 +55,7 @@ class SignatureLinkParser
                             $n_param = $matches[1];
 
                             if (!array_key_exists($n_param, $decoded_nsig)) {
-                                $decoded_nsig[$n_param] = (new NSigDecoder())->decode($n_param, $playerJs->getResponseBody());
+                                $decoded_nsig[$n_param] = $n_decoder->decode($n_param, $playerJs->getResponseBody());
                             }
                             if ($decoded_nsig[$n_param] != $n_param) {
                                 $url = str_replace('&n=' . $n_param . '&', '&n=' . $decoded_nsig[$n_param] . '&', $url);
@@ -68,7 +70,7 @@ class SignatureLinkParser
                     // some videos do not need signature decryption
                     $streamUrl->url = $url;
                 } else {
-                    $decoded_signature = (new SignatureDecoder())->decode($signature, $playerJs->getResponseBody());
+                    $decoded_signature = $s_decoder->decode($signature, $playerJs->getResponseBody());
                     $decoded_url = $url . '&' . $sp . '=' . urlencode($decoded_signature);
 
                     $streamUrl->url = $decoded_url;
