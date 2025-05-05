@@ -15,6 +15,12 @@ use YouTube\Utils\Utils;
 
 class YouTubeDownloader
 {
+    const REGEX_SID = array(
+        'SAPISID' => '/\.youtube\.com[ \t]+.+SAPISID[ \t]+([^\s]+)/',
+        'SAPISID1P' => '/\.youtube\.com[ \t]+.+__Secure-1PAPISID[ \t]+([^\s]+)/',
+        'SAPISID3P' => '/\.youtube\.com[ \t]+.+__Secure-3PAPISID[ \t]+([^\s]+)/'
+    );
+
     protected Browser $client;
 
     function __construct()
@@ -82,11 +88,36 @@ class YouTubeDownloader
         return new WatchVideoPage($response);
     }
 
+    // Generating authorization headers for cookies authentication
+    protected function setAuthHeaders(?string $session_index, ?string $user_session_id): array
+    {
+        $cookies = $this->client->getCookies();
+        $timestamp = time();
+        $sid_hash = array();
+        foreach (['SAPISID3P', 'SAPISID', 'SAPISID1P', 'SAPISID3P'] as $i=>$scheme) {
+            if (preg_match(self::REGEX_SID[$scheme], $cookies, $matches)) {
+                $sid = trim($matches[1]);
+            }
+            if ($i > 0 && !empty($user_session_id) && !empty($sid)) {
+                $sid_hash[] = "{$scheme}HASH {$timestamp}_" . sha1("{$user_session_id} {$timestamp} {$sid} https://www.youtube.com") . '_u';
+            }
+        }
+
+        return empty($sid_hash) ? [] : array(
+            'Authorization' => implode(' ', $sid_hash),
+            'X-Goog-Authuser' => $session_index,
+            'X-Youtube-Bootstrap-Logged-In' => true,
+        );
+    }
+
     // Downloading player API JSON
     protected function getPlayerApiResponse(string $video_id, string $client_id, YouTubeConfigData $configData): PlayerApiResponse
     {
         $visitor_id = $configData->getGoogleVisitorId();
         $sig_timestamp = $configData->getSignatureTimestamp();
+        $page_id = $configData->getDelegatedSessionId();
+        $session_index = $configData->getSessionIndex();
+        $user_session_id = $configData->getUserSessionId();
 
         $clients = $this->api_clients::$clients;
 
@@ -102,13 +133,13 @@ class YouTubeDownloader
                 $clients[$client_id]['context'] = $configData->deepGet('INNERTUBE_CONTEXT');
             }
         }
-
-        foreach(['hl' => 'en', 'timeZone' => 'UTC', 'utcOffsetMinutes' => 0] as $k => $v){
-            $clients[$client_id]['context']['client'][$k] = $v;
+        $context = $configData->getContext();
+        foreach($clients[$client_id]['context']['client'] as $k => $v){
+            $context['client'][$k] = $v;
         }
 
         $response = $this->client->post('https://www.youtube.com/youtubei/v1/player?key=' . $configData->getApiKey(), json_encode([
-                'context' => $clients[$client_id]['context'],
+                'context' => $context,
                 'videoId' => $video_id,
                 'playbackContext' => [
                     'contentPlaybackContext' => [
@@ -117,12 +148,15 @@ class YouTubeDownloader
                     ]
                 ],
                 'racyCheckOk' => true,
-            ]), [
+            ]), array_merge([
                 'Content-Type' => 'application/json',
+                'Origin' => 'https://www.youtube.com',
+                'X-Origin' => 'https://www.youtube.com',
+                'X-Goog-PageId' => $page_id,
                 'X-Goog-Visitor-Id' => $visitor_id,
                 'X-Youtube-Client-Name' => $configData->getClientName(),
                 'X-Youtube-Client-Version' => $configData->getClientVersion(),
-            ]);
+            ], $this->setAuthHeaders($session_index, $user_session_id)));
 
         return new PlayerApiResponse($response);
     }

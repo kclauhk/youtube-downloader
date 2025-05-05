@@ -28,4 +28,24 @@ class YouTubeConfigData extends JsonObject
     {
         return $this->deepGet('STS');
     }
+
+    public function getContext(): ?array
+    {
+        return $this->deepGet('INNERTUBE_CONTEXT');
+    }
+
+    public function getDelegatedSessionId(): ?string
+    {
+        return $this->deepGet('DELEGATED_SESSION_ID');
+    }
+
+    public function getSessionIndex(): ?string
+    {
+        return $this->deepGet('SESSION_INDEX');
+    }
+
+    public function getUserSessionId(): ?string
+    {
+        return $this->deepGet('USER_SESSION_ID');
+    }
 }
