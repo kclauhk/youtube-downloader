@@ -75,7 +75,7 @@ class NSigDecoder
         $jsrt = new JsRuntime();
 
         if ($jsrt->getApp()) {
-            $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . $n_param;
+            $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . preg_replace('/\W/', '-', $n_param);
 
             if (file_put_contents("{$cache_path}.dump", $func_code . "console.log({$func_name}('{$n_param}'));") === false) {
                 throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());
