@@ -177,7 +177,7 @@ class SignatureDecoder
         $jsrt = new JsRuntime();
 
         if ($jsrt->getApp()) {
-            $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . preg_replace('/\W/', '-', $func_name);
+            $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . substr(preg_replace('/\W/', '-', $signature), 0, 40);
 
             if (file_put_contents("{$cache_path}.dump", $func_code . "console.log({$func_name}('{$signature}'));") === false) {
                 throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());

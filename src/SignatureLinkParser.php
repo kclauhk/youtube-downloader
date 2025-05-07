@@ -48,7 +48,7 @@ class SignatureLinkParser
             $streamUrl = new StreamFormat($format);
 
             if ($playerJs) {
-                if (preg_match('/&n=(.*?)&/', $url, $matches)) {
+                if (preg_match('/&n=(.*?)&/', ($url ?? ''), $matches)) {
                     // decrypt nsig
                     try {
                         if ((new JsRuntime())->getApp()) {
