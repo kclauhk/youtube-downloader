@@ -2,11 +2,9 @@ This is forked from [Athlon1600/youtube-downloader](https://github.com/Athlon160
 
 # YouTube Downloader
 
-[![Build Status](https://github.com/ytdl-org/youtube-dl/workflows/CI/badge.svg)](https://github.com/ytdl-org/youtube-dl/actions?query=workflow%3ACI)
-![](https://img.shields.io/github/license/Athlon1600/youtube-downloader.svg)
-![](https://img.shields.io/packagist/dt/Athlon1600/youtube-downloader.svg)
-![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/y/athlon1600/youtube-downloader)
-![](https://img.shields.io/github/last-commit/Athlon1600/youtube-downloader.svg)
+![](https://img.shields.io/github/license/kclauhk/youtube-downloader.svg)
+![](https://img.shields.io/packagist/dt/kclauhk/youtube-downloader.svg)
+![](https://img.shields.io/github/last-commit/kclauhk/youtube-downloader.svg)
 
 This project was inspired by a very popular youtube-dl python package:  
 https://github.com/ytdl-org/youtube-dl
@@ -46,6 +44,10 @@ composer require kclauhk/youtube-downloader "4.1.0"
 
 ## Changes in this fork
 
+### HLS manifest (available in "ios" only)
+To get the URL of HLS manifest  
+`$manifestUrl = $downloadOptions->getHlsManifestUrl();`
+
 ### nsig decoding is supported
 [Deno](https://deno.com/) (an open-source JavaScript runtime) is required for nsig decoding.  
 To use this project with Deno, you can either
@@ -53,12 +55,12 @@ To use this project with Deno, you can either
 - specify the path of the folder containing Deno executable by  
   `$youtube->getJsrt()->setPath('path of the folder');`
 
-Hence, "TVHTML5" client, which require nsig, is added. (client ID: "tv")  
+Hence, "TVHTML5", which require nsig, is added. (client ID: "tv")  
 
 ### player client can be added/modified
 You can add additional clients/modify the built-in clients by:  
   `$youtube->getApiClients()->setClient($client_id, $client_data);`
-- `$client_id`   - ID of the client
+- `$client_id`   - ID of the player client
 - `$client_data` - client data in array of key-value pairs which must contains "clientName" and "clientVersion",  
   for example, adding "WEB_EMBEDDED_PLAYER":  
   ```
@@ -73,7 +75,7 @@ You can add additional clients/modify the built-in clients by:
 
 ### Changes since [v4.1.0](https://github.com/kclauhk/youtube-downloader/releases/tag/v4.1.0)
 - Two YouTube clients (client ID: "android_vr" and "ios") are built into YouTubeDownloader
-  - To specify a client
+  - To specify a player client
     ```
     $downloadOptions = $youtube->getDownloadLinks($url, $client_id);
     ```

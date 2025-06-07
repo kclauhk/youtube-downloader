@@ -224,6 +224,8 @@ class YouTubeDownloader
                 $parsed[$k]->pref = -$i;
             }
             $links = array_merge($links, $parsed);
+            
+            $hlsManifestUrl = $hlsManifestUrl ?? $player_response->getHlsManifestUrl();
         }
 
         if (count($client_ids) > 1) {
@@ -252,7 +254,7 @@ class YouTubeDownloader
         $info = $page->getVideoInfo();
         $captions = $this->getCaptions($player_response);
 
-        return new DownloadOptions($links, $info, $captions);
+        return new DownloadOptions($links, $hlsManifestUrl, $info, $captions);
     }
 
     /**
