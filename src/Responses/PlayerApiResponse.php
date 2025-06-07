@@ -29,6 +29,11 @@ class PlayerApiResponse extends HttpResponse
         return array_merge((array)$formats, (array)$adaptiveFormats);
     }
 
+    public function getHlsManifestUrl(): ?string
+    {
+        return $this->query('streamingData.hlsManifestUrl');
+    }
+
     public function getCaptionTracks(): array
     {
         return (array)$this->query('captions.playerCaptionsTracklistRenderer.captionTracks');
