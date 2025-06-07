@@ -31,9 +31,4 @@ class InitialPlayerResponse extends JsonObject
     {
         return $this->deepGet('videoDetails');
     }
-
-    public function getCaptionTracks(): array
-    {
-        return (array)$this->deepGet("captions.playerCaptionsTracklistRenderer.captionTracks");
-    }
 }

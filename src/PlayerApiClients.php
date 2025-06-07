@@ -26,6 +26,7 @@ class PlayerApiClients
                         'osVersion' => '12L',
                     ],
                 ],
+                'client_name' => 28,
             ],
             // "android" client is broken and links expire after 30s
             'android' => [
@@ -39,6 +40,7 @@ class PlayerApiClients
                         'osVersion' => '11',
                     ],
                 ],
+                'client_name' => 3,
             ],
             'ios' => [
                 'context' => [
@@ -52,6 +54,7 @@ class PlayerApiClients
                         'osVersion' => '18.3.2.22D82',
                     ],
                 ],
+                'client_name' => 5,
             ],
             'tv' => [       // "tv" client requires nsig
                 'context' => [
@@ -61,6 +64,7 @@ class PlayerApiClients
                         'userAgent' => 'Mozilla/5.0 (ChromiumStylePlatform) Cobalt/Version',
                     ],
                 ],
+                'client_name' => 7,
                 'config_url' => 'https://www.youtube.com/tv',
             ],
         ];

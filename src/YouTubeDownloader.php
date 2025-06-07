@@ -27,6 +27,8 @@ class YouTubeDownloader
     {
         $this->client = new Browser();
         $this->api_clients = new PlayerApiClients();
+
+        $this->client->setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36');
     }
 
     // Specify network options to be used in all network requests
@@ -94,7 +96,7 @@ class YouTubeDownloader
         $cookies = $this->client->getCookies();
         $timestamp = time();
         $sid_hash = array();
-        foreach (['SAPISID3P', 'SAPISID', 'SAPISID1P', 'SAPISID3P'] as $i=>$scheme) {
+        foreach (['SAPISID3P', 'SAPISID', 'SAPISID1P', 'SAPISID3P'] as $i => $scheme) {
             if (preg_match(self::REGEX_SID[$scheme], $cookies, $matches)) {
                 $sid = trim($matches[1]);
             }
@@ -113,29 +115,34 @@ class YouTubeDownloader
     // Downloading player API JSON
     protected function getPlayerApiResponse(string $video_id, string $client_id, YouTubeConfigData $configData): PlayerApiResponse
     {
+        $clients = $this->api_clients::$clients;
+
+        if (!array_key_exists($client_id, $clients)) {
+            throw new YouTubeException('Player client "' . $client_id . '" not defined');
+        }
+
         $visitor_id = $configData->getGoogleVisitorId();
         $sig_timestamp = $configData->getSignatureTimestamp();
         $page_id = $configData->getDelegatedSessionId();
         $session_index = $configData->getSessionIndex();
         $user_session_id = $configData->getUserSessionId();
 
-        $clients = $this->api_clients::$clients;
-
-        $this->client->setUserAgent($clients[$client_id]['context']['client']['userAgent']
-                                    ?? $_SERVER['HTTP_USER_AGENT']
-                                    ?? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36');
+        if (!empty($clients[$client_id]['context']['client']['userAgent'])) {
+            $this->client->setUserAgent($clients[$client_id]['context']['client']['userAgent']);
+        }
 
         if (isset($clients[$client_id]['config_url'])) {
             $response = $this->client->get($clients[$client_id]['config_url']);
             $config = new WatchVideoPage($response);
             if (!empty($config->getYouTubeConfigData())) {
                 $configData = $config->getYouTubeConfigData();
-                $clients[$client_id]['context'] = $configData->deepGet('INNERTUBE_CONTEXT');
             }
-        }
-        $context = $configData->getContext();
-        foreach($clients[$client_id]['context']['client'] as $k => $v){
-            $context['client'][$k] = $v;
+            $context = $configData->getContext();
+        } else {
+            $context = $clients[$client_id]['context'];
+            foreach (['hl' => 'en', 'timeZone' => 'UTC', 'utcOffsetMinutes' => 0] as $k => $v){
+                $context['client'][$k] = $v;
+            }
         }
 
         $response = $this->client->post('https://www.youtube.com/youtubei/v1/player?key=' . $configData->getApiKey(), json_encode([
@@ -144,19 +151,19 @@ class YouTubeDownloader
                 'playbackContext' => [
                     'contentPlaybackContext' => [
                         'html5Preference' => 'HTML5_PREF_WANTS',
-                        'signatureTimestamp' => $sig_timestamp,
+                        'signatureTimestamp' => (int)$sig_timestamp,
                     ]
                 ],
                 'racyCheckOk' => true,
-            ]), array_merge([
+            ]), array_merge(array_filter([
                 'Content-Type' => 'application/json',
                 'Origin' => 'https://www.youtube.com',
                 'X-Origin' => 'https://www.youtube.com',
                 'X-Goog-PageId' => $page_id,
                 'X-Goog-Visitor-Id' => $visitor_id,
-                'X-Youtube-Client-Name' => $configData->getClientName(),
-                'X-Youtube-Client-Version' => $configData->getClientVersion(),
-            ], $this->setAuthHeaders($session_index, $user_session_id)));
+                'X-Youtube-Client-Name' => $clients[$client_id]['client_name'],
+                'X-Youtube-Client-Version' => $context['client']['clientVersion'],
+            ]), $this->setAuthHeaders($session_index, $user_session_id)));
 
         return new PlayerApiResponse($response);
     }
@@ -164,14 +171,13 @@ class YouTubeDownloader
     /**
      *
      * @param string $video_id
-     * @param array/string $clients     array or comma-delimited string (the 1st in the list the highest priority)
-     * @param array $extra
+     * @param array/string $extra     array or comma-delimited string of player client IDs (the 1st in the list has the highest preference)
      * @return DownloadOptions
      * @throws TooManyRequestsException
      * @throws VideoNotFoundException
      * @throws YouTubeException
      */
-    public function getDownloadLinks(string $video_id, $clients = 'ios', array $extra = []): DownloadOptions
+    public function getDownloadLinks(string $video_id, $extra = 'ios'): DownloadOptions
     {
         $video_id = Utils::extractVideoId($video_id);
 
@@ -185,6 +191,8 @@ class YouTubeDownloader
             throw new TooManyRequestsException($page);
         } elseif (!$page->isStatusOkay()) {
             throw new YouTubeException('Page failed to load. HTTP error: ' . $page->getResponse()->error);
+        } elseif (!$page->getPlayerResponse()) {
+            throw new YouTubeException('Page failed to load.');
         } elseif ($page->getPlayerResponse()->getPlayabilityStatusReason()) {
             throw new YouTubeException($page->getPlayerResponse()->getPlayabilityStatusReason());
         } elseif ($page->isVideoNotFound()) {
@@ -195,8 +203,8 @@ class YouTubeDownloader
         $youtube_config_data = $page->getYouTubeConfigData();
 
         $links = [];
-        $client_ids = is_array($clients) ? $clients : explode(',', preg_replace('/\s+/', '', $clients));
-        foreach($client_ids as $client_id) {
+        $client_ids = is_array($extra) ? $extra : explode(',', preg_replace('/\s+/', '', $extra));
+        foreach ($client_ids as $i => $client_id) {
             // the most reliable way of fetching all download links no matter what
             // query: /youtubei/v1/player for some additional data
             $player_response = $this->getPlayerApiResponse($video_id, strtolower($client_id), $youtube_config_data);
@@ -211,7 +219,11 @@ class YouTubeDownloader
             $response = $this->client->get($player_url);
             $player = new VideoPlayerJs($response);
 
-            $links = array_merge($links, SignatureLinkParser::parseLinks($player_response, $player));
+            $parsed = SignatureLinkParser::parseLinks($player_response, $player);
+            foreach ($parsed as $k => $v) {
+                $parsed[$k]->pref = -$i;
+            }
+            $links = array_merge($links, $parsed);
         }
 
         if (count($client_ids) > 1) {
@@ -221,13 +233,15 @@ class YouTubeDownloader
                                            <=> ($b->mimeType[0]=='v' ? ((bool)$b->audioQuality ? $b->itag : 999) : str_replace(['_','D','H'], ['L','M','S'], substr($b->audioQuality,-4,1))) ?:
                                        $b->height <=> $a->height ?:
                                        $a->itag <=> $b->itag ?:
-                                       $a->isDrc <=> $b->isDrc
+                                       $a->isDrc <=> $b->isDrc ?:
+                                       $b->pref <=> $a->pref
             );
             // remove duplicated formats
-            foreach($links as $k=>$v) {
+            foreach ($links as $k => $v) {
                 if ($v->itag === ($i ?? 0) && $v->isDrc === ($c ?? false)) {
                     unset($links[$k]);
                 } else {
+                    unset($links[$k]->pref);
                     $i = $v->itag;
                     $c = $v->isDrc;
                 }
@@ -236,24 +250,24 @@ class YouTubeDownloader
 
         // since we already have that information anyways...
         $info = $page->getVideoInfo();
-        $captions = $this->getCaptions($page->getPlayerResponse());
+        $captions = $this->getCaptions($player_response);
 
         return new DownloadOptions($links, $info, $captions);
     }
 
     /**
-     * @param Models\InitialPlayerResponse $player_response
+     * @param PlayerApiResponse $player_response
      * @return YouTubeCaption[]
      */
-    protected function getCaptions(Models\InitialPlayerResponse $player_response): array
+    protected function getCaptions(PlayerApiResponse $player_response): array
     {
         if ($player_response) {
             return array_map(function ($item) {
                 $baseUrl = Utils::arrayGet($item, 'baseUrl');
 
                 $temp = new YouTubeCaption();
-                $temp->name = Utils::arrayGet($item, 'name.simpleText') ?? Utils::arrayGet($item, 'name.runs.0.text');
-                $temp->baseUrl = ($baseUrl[0] == '/' ? 'https://www.youtube.com' : '') . $baseUrl;
+                $temp->name = Utils::arrayGetText($item, 'name');
+                $temp->baseUrl = Utils::relativeToAbsoluteUrl($baseUrl, 'www.youtube.com');
                 $temp->languageCode = Utils::arrayGet($item, 'languageCode');
                 $vss = Utils::arrayGet($item, 'vssId');
                 $temp->isAutomatic = Utils::arrayGet($item, 'kind') === 'asr' || strpos($vss, 'a.') !== false;

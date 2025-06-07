@@ -28,4 +28,9 @@ class PlayerApiResponse extends HttpResponse
 
         return array_merge((array)$formats, (array)$adaptiveFormats);
     }
+
+    public function getCaptionTracks(): array
+    {
+        return (array)$this->query('captions.playerCaptionsTracklistRenderer.captionTracks');
+    }
 }

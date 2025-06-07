@@ -97,7 +97,7 @@ class Utils
     public static function relativeToAbsoluteUrl(string $url, string $domain): string
     {
         $scheme = parse_url($url, PHP_URL_SCHEME);
-        $scheme = $scheme ? $scheme : 'http';
+        $scheme = $scheme ? $scheme : 'https';
 
         // relative protocol?
         if (strpos($url, '//') === 0) {
@@ -125,5 +125,32 @@ class Utils
         header('Content-Type: application/json');
         echo json_encode($data, JSON_PRETTY_PRINT);
         exit;
+    }
+
+    /**
+     * @param array $array
+     * @param string $key
+     * @return string|null
+     */
+    public static function arrayGetText(array $array, string $key): ?string
+    {
+        if (array_key_exists($key, $array) && is_array($array[$key])) {
+
+            if (array_key_exists('simpleText', $array[$key])) {
+                // simpleText
+                return implode('', (array)$array[$key]['simpleText']);
+            } elseif (array_key_exists('runs', $array[$key])) {
+                // text segments in 'runs'
+                $runs = $array[$key]['runs'];
+                foreach ($runs as $run) {
+                    if (array_key_exists('text', $run)) {
+                        $text[] = implode('', (array)$run['text']);
+                    }
+                }
+                return implode('', $text);
+            }
+        }
+
+        return null;
     }
 }
