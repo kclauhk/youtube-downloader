@@ -18,11 +18,15 @@ class DownloadOptions
     /** @var array|null */
     private ?array $captions;
 
-    public function __construct(array $formats, VideoInfo $info = null, ?array $captions = null)
+    /** @var string|null */
+    private ?string $hlsManifestUrl;
+
+    public function __construct(array $formats, ?string $hlsManifestUrl, VideoInfo $info, ?array $captions)
     {
         $this->formats = $formats;
         $this->info = $info;
         $this->captions = $captions;
+        $this->hlsManifestUrl = $hlsManifestUrl;
     }
 
     /**
@@ -84,5 +88,13 @@ class DownloadOptions
     {
         $combined = $this->getCombinedFormats();
         return count($combined) ? $combined[0] : null;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getHlsManifestUrl(): ?string
+    {
+        return $this->hlsManifestUrl;
     }
 }
