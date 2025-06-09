@@ -149,6 +149,7 @@ class SignatureDecoder
                     $instructions = array();
 
                     foreach ($fn_names as $fn_name) {
+                        $fn_name = preg_quote($fn_name);
                         if (preg_match("@(?:(?:var|const|let)\s+{$fn_name}\s*=|(?:function\s+{$fn_name}|[{;,]\s*{$fn_name}\s*=\s*function|(?:var|const|let)\s+{$fn_name}\s*=\s*function)\s*\([^)]*\))\s*{.+?};@xs", $player_html, $matches)) {
                             $instructions[] = $matches[0];
                         }
