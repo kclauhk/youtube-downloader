@@ -2,11 +2,9 @@ This is forked from [Athlon1600/youtube-downloader](https://github.com/Athlon160
 
 # YouTube Downloader
 
-[![Build Status](https://github.com/ytdl-org/youtube-dl/workflows/CI/badge.svg)](https://github.com/ytdl-org/youtube-dl/actions?query=workflow%3ACI)
-![](https://img.shields.io/github/license/Athlon1600/youtube-downloader.svg)
-![](https://img.shields.io/packagist/dt/Athlon1600/youtube-downloader.svg)
-![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/y/athlon1600/youtube-downloader)
-![](https://img.shields.io/github/last-commit/Athlon1600/youtube-downloader.svg)
+![](https://img.shields.io/github/license/kclauhk/youtube-downloader.svg)
+![](https://img.shields.io/packagist/dt/kclauhk/youtube-downloader.svg)
+![](https://img.shields.io/github/last-commit/kclauhk/youtube-downloader.svg)
 
 This project was inspired by a very popular youtube-dl python package:  
 https://github.com/ytdl-org/youtube-dl
@@ -34,15 +32,36 @@ We are not responsible for people who attempt to use this program in any way tha
 Recommended way of installing this is via [Composer](http://getcomposer.org):
 
 ```bash
-composer require kclauhk/youtube-downloader "^4.1.0"
+composer require kclauhk/youtube-downloader "4.1.1"
 ```
 
 ## Changes in this fork
 
-- Two YouTube clients (client id: "android_vr" and "ios") are built into YouTubeDownloader
-  - To specify a client
+### HLS manifest (available in "ios" only)
+To get the URL of HLS manifest  
+`$manifestUrl = $downloadOptions->getHlsManifestUrl();`
+
+### player client can be added/modified
+You can add additional clients/modify the built-in clients by:  
+  `$youtube->getApiClients()->setClient($client_id, $client_data);`
+- `$client_id`   - ID of the player client
+- `$client_data` - client data in array of key-value pairs which must contains "clientName" and "clientVersion",  
+  for example, adding "WEB_EMBEDDED_PLAYER":  
+  ```
+  $client = array(
+      'clientName' => 'WEB_EMBEDDED_PLAYER',
+      'clientVersion' => '1.20241201.00.00',
+  );
+  $youtube->getApiClients()->setClient('web_embedded', $client);
+  $downloadOptions = $youtube->getDownloadLinks($url, 'web_embedded');    // use 'web_embedded'
+  ```
+  (client which requires nsig decryption/PO token is not supported)
+
+### Changes since [v4.1.0](https://github.com/kclauhk/youtube-downloader/releases/tag/v4.1.0)
+- Two YouTube clients (client ID: "android_vr" and "ios") are built into YouTubeDownloader
+  - To specify a player client
     ```
-    $downloadOptions = $youtube->getDownloadLinks($url, "android_vr");
+    $downloadOptions = $youtube->getDownloadLinks($url, $client_id);
     ```
   - `$downloadOptions = $youtube->getDownloadLinks($url);` will use the default client "ios"
 - `StreamFormat` object now contains `audioTrack`, `indexRange` and `isDrc` properties
