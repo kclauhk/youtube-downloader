@@ -32,10 +32,21 @@ We are not responsible for people who attempt to use this program in any way tha
 Recommended way of installing this is via [Composer](http://getcomposer.org):
 
 ```bash
-composer require kclauhk/youtube-downloader "4.1.1"
+composer require kclauhk/youtube-downloader "4.1.2"
 ```
 
 ## Changes in this fork
+
+### translated video details (if available) is supported
+- To specify the desired language (by YouTube language code)
+  ```
+  $downloadOptions = $youtube->getDownloadLinks($url, ['lang'=>'fr']);
+  ```
+- To specify the desired language and player client
+  ```
+  $downloadOptions = $youtube->getDownloadLinks($url, ['client'=>'android_vr', 'lang'=>'fr']);
+  ```
+P.S. The old way to specify the player client(s) remains valid.
 
 ### HLS manifest (available in "ios" only)
 To get the URL of HLS manifest  
