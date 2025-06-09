@@ -71,15 +71,24 @@ class YouTubeDownloader
         return [];
     }
 
-    public function getVideoInfo(string $video_id): ?VideoInfo
+    public function getVideoInfo(string $video_id, ?string $lang = null): ?VideoInfo
     {
-        $page = $this->getPage($video_id);
-        return $page->getVideoInfo();
+        $page = $this->getPage($video_id, $lang);
+        return $page->getVideoInfo($lang);
     }
 
-    public function getPage(string $url): WatchVideoPage
+    public function getPage(string $url, ?string $lang = null): WatchVideoPage
     {
         $video_id = Utils::extractVideoId($url);
+
+        $lang = preg_match('/^[a-zA-Z-]+$/', (string)$lang, $matches) ? $lang : 'en';
+        $cookies = $this->client->getCookies();
+        if (preg_match_all('/(\n\.youtube\.com.*[&\t](hl=[\w-]+))/', $cookies, $matches)) {
+            $cookies = str_replace(end($matches[1]), str_replace(end($matches[2]), "hl=$lang", end($matches[1])), $cookies);
+            $this->client->setCookies($cookies);
+        } else {
+            $this->client->setCookies($cookies . "\n.youtube.com\tTRUE\t/\tFALSE\t0\tPREF\thl=$lang\n");
+        }
 
         $response = $this->client->get('https://www.youtube.com/watch?' . http_build_query([
                 'v' => $video_id,
@@ -140,9 +149,9 @@ class YouTubeDownloader
             $context = $configData->getContext();
         } else {
             $context = $clients[$client_id]['context'];
-            foreach (['hl' => 'en', 'timeZone' => 'UTC', 'utcOffsetMinutes' => 0] as $k => $v){
-                $context['client'][$k] = $v;
-            }
+        }
+        foreach (['hl' => 'en', 'timeZone' => 'UTC', 'utcOffsetMinutes' => 0] as $k => $v){
+            $context['client'][$k] = $v;
         }
 
         $response = $this->client->post('https://www.youtube.com/youtubei/v1/player?key=' . $configData->getApiKey(), json_encode([
@@ -161,7 +170,7 @@ class YouTubeDownloader
                 'X-Origin' => 'https://www.youtube.com',
                 'X-Goog-PageId' => $page_id,
                 'X-Goog-Visitor-Id' => $visitor_id,
-                'X-Youtube-Client-Name' => $clients[$client_id]['client_name'],
+                'X-Youtube-Client-Name' => ($clients[$client_id]['client_name'] ?? null),
                 'X-Youtube-Client-Version' => $context['client']['clientVersion'],
             ]), $this->setAuthHeaders($session_index, $user_session_id)));
 
@@ -171,7 +180,8 @@ class YouTubeDownloader
     /**
      *
      * @param string $video_id
-     * @param array/string $extra     array or comma-delimited string of player client IDs (the 1st in the list has the highest preference)
+     * @param array/string $extra       array of options, e.g. ['client'=>'tv', 'lang'=>'fr'] or
+     *                                  comma-delimited list of player client IDs (the 1st in the list has the highest preference)
      * @return DownloadOptions
      * @throws TooManyRequestsException
      * @throws VideoNotFoundException
@@ -185,7 +195,22 @@ class YouTubeDownloader
             throw new \InvalidArgumentException('Invalid video ID: ' . $video_id);
         }
 
-        $page = $this->getPage($video_id);
+        $lang = null;
+        $client_ids = ['ios'];
+        if ($extra) {
+            if (is_array($extra)) {
+                if (array_key_exists('lang', $extra)) {
+                    $lang = (is_string($extra['lang']) && preg_match('/^[a-zA-Z-]+$/', $extra['lang'], $matches)) ? $extra['lang'] : $lang;
+                }
+                if (array_key_exists('client', $extra)) {
+                    $client_ids = is_array($extra['client']) ? $extra['client'] : explode(',', preg_replace('/\s+/', '', $extra['client']));
+                }
+            } elseif (is_string($extra)) {
+                $client_ids = explode(',', preg_replace('/\s+/', '', $extra)) ?: $client_ids;
+            }
+        }
+
+        $page = $this->getPage($video_id, $lang);
 
         if ($page->isTooManyRequests()) {
             throw new TooManyRequestsException($page);
@@ -203,7 +228,6 @@ class YouTubeDownloader
         $youtube_config_data = $page->getYouTubeConfigData();
 
         $links = [];
-        $client_ids = is_array($extra) ? $extra : explode(',', preg_replace('/\s+/', '', $extra));
         foreach ($client_ids as $i => $client_id) {
             // the most reliable way of fetching all download links no matter what
             // query: /youtubei/v1/player for some additional data
@@ -224,7 +248,7 @@ class YouTubeDownloader
                 $parsed[$k]->pref = -$i;
             }
             $links = array_merge($links, $parsed);
-            
+
             $hlsManifestUrl = $hlsManifestUrl ?? $player_response->getHlsManifestUrl();
         }
 
@@ -251,7 +275,7 @@ class YouTubeDownloader
         }
 
         // since we already have that information anyways...
-        $info = $page->getVideoInfo();
+        $info = $page->getVideoInfo($lang);
         $captions = $this->getCaptions($player_response);
 
         return new DownloadOptions($links, $hlsManifestUrl, $info, $captions);

@@ -38,4 +38,22 @@ class VideoInfoMapper
 
         return $result;
     }
+
+    public static function fromInitialData($initialData): VideoInfo
+    {
+        $primaryInfo = Utils::arrayGet($initialData, 'contents.twoColumnWatchNextResults.results.results.contents.0.videoPrimaryInfoRenderer');
+        $secondaryInfo = Utils::arrayGet($initialData, 'contents.twoColumnWatchNextResults.results.results.contents.1.videoSecondaryInfoRenderer');
+
+        $result = new VideoInfo();
+
+        if ($primaryInfo) {
+            $result->title = Utils::arrayGetText($primaryInfo, 'title');
+        }
+        if ($secondaryInfo) {
+            $result->description = Utils::arrayGet($secondaryInfo, 'attributedDescription.content');
+            $result->channelTitle = Utils::arrayGetText(Utils::arrayGet($secondaryInfo, 'owner.videoOwnerRenderer'), 'title');
+        }
+
+        return $result;
+    }
 }

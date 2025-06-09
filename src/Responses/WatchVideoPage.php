@@ -13,7 +13,7 @@ class WatchVideoPage extends HttpResponse
 {
     const REGEX_YTCFG = '/ytcfg\.set\s*\(\s*({.+})\s*\)\s*;/';
     const REGEX_INITIAL_PLAYER_RESPONSE = '/ytInitialPlayerResponse\s*=\s*({.+})\s*;/';
-    const REGEX_INITIAL_DATA = '/ytInitialData\s*=\s*({.+})\s*;/';
+    const REGEX_INITIAL_DATA = '/ytInitialData\s*=\s*({.+})\s*;<\/script>/';
     const REGEX_MARKERS_MAP = '/markersMap"\s*:\s*\[\s*\{.+?(\{"chapters"\s*:\s*\[\s*\{.+?\}\}\})\}(?:\]\s*,\s*"|,\s*\{)/';
 
     public function isTooManyRequests(): bool
@@ -92,12 +92,23 @@ class WatchVideoPage extends HttpResponse
      * Parse whatever info we can just from this page without making any additional requests
      * @return VideoInfo
      */
-    public function getVideoInfo(): ?VideoInfo
+    public function getVideoInfo(?string $lang = null): ?VideoInfo
     {
         $playerResponse = $this->getPlayerResponse();
 
         if ($playerResponse) {
             $result = VideoInfoMapper::fromInitialPlayerResponse($playerResponse);
+
+            if (preg_match('/^[a-zA-Z-]+$/', (string)$lang, $matches)) {
+                $initialData = $this->getInitialData();
+
+                if ($initialData) {
+                    $info = VideoInfoMapper::fromInitialData($initialData);
+                    $result->title = $info->title;
+                    $result->description = $info->description;
+                    $result->channelTitle = $info->channelTitle;
+                }
+            }
 
             $chapters = $this->getChapterInfo();
             if (!empty($chapters)) {
