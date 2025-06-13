@@ -233,10 +233,13 @@ class YouTubeDownloader
             // query: /youtubei/v1/player for some additional data
             $player_response = $this->getPlayerApiResponse($video_id, strtolower($client_id), $youtube_config_data);
 
-            // throws exception if player response does not belong to the requested video
             preg_match('/videoId"\s*:\s*"([^"]+)"/', print_r($player_response, true), $matches);
-            if (($matches[1] ?? '') != $video_id)
+            if (($matches[1] ?? '') != $video_id) {
+                if ($player_response->getPlayabilityStatusReason())
+                    throw new YouTubeException($player_response->getPlayabilityStatusReason());
+                // throws exception if player response does not belong to the requested video
                 throw new YouTubeException('Invalid player response: got player response for video "' . ($matches[1] ?? '') . '" instead of "' . $video_id .'"');
+            }
 
             // get player.js location that holds URL signature decipher function
             $player_url = $page->getPlayerScriptUrl();

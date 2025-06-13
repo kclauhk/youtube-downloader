@@ -38,4 +38,9 @@ class PlayerApiResponse extends HttpResponse
     {
         return (array)$this->query('captions.playerCaptionsTracklistRenderer.captionTracks');
     }
+
+    public function getPlayabilityStatusReason(): ?string
+    {
+        return $this->query('playabilityStatus.reason') ?: implode(' ', $this->query('playabilityStatus.messages') ?? []);
+    }
 }
