@@ -3,6 +3,7 @@
 namespace YouTube;
 
 use YouTube\Exception\YouTubeException;
+use YouTube\Utils\Utils;
 
 class PlayerApiClients
 {
@@ -61,24 +62,27 @@ class PlayerApiClients
 
     /**
      * @param string $client_id
-     * @param array $config_data
+     * @param array  $context
      * @param string $config_url    (optional) the URL of client config
      * @return boolean
      */
-    public function setClient(string $client_id, array $config_data, string $config_url = null): bool
+    public function setClient(string $client_id, array $context, string $config_url = null): bool
     {
-        $has_name = array_key_exists('clientName', $config_data);
-        $has_ver = array_key_exists('clientVersion', $config_data);
-
+        $ctx_c = Utils::arrayGet($context, 'context.client') ?? [];
+        $has_name = (bool)Utils::arrayGet($context, 'clientName') || (bool)Utils::arrayGet($ctx_c, 'clientName');
+        if ($has_name) {
+            $has_ver = ((bool)Utils::arrayGet($context, 'clientName') && (bool)Utils::arrayGet($context, 'clientVersion'))
+                        || ((bool)Utils::arrayGet($ctx_c, 'clientName') && (bool)Utils::arrayGet($ctx_c, 'clientVersion'));
+        }
         if (!$has_name || !$has_ver) {
             throw new YouTubeException('Invalid client context: ' . ($has_name ? '"clientVersion"' : '"clientName"') . ' is missing');
             return false;
         }
 
-        static::$clients[$client_id] = ['context' => ['client' => $config_data]];
+        static::$clients[$client_id] = empty($ctx_c) ? ['context' => ['client' => $context]] : $context;
 
         if (!empty($config_url)) {
-            $url = filter_var($url, FILTER_SANITIZE_URL);
+            $url = filter_var($config_url, FILTER_SANITIZE_URL);
             if (filter_var($url, FILTER_VALIDATE_URL)) {
                 static::$clients[$client_id]['config_url'] = $url;
             }
