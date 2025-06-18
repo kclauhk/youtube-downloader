@@ -14,8 +14,8 @@ but most of them haven't been updated in years, or they depend on youtube-dl its
 
 Pure PHP-based youtube downloaders that work, and are **kept-up-to date** just do not exist.
 
-*For v4.1.x,*  
-this script uses no Javascript interpreters, no calls to shell... nothing but pure PHP with no heavy dependencies either.
+*For [v4.1.x](https://github.com/kclauhk/youtube-downloader/tree/4.1.x),*  
+the script uses no JavaScript interpreters, no calls to shell... nothing but pure PHP with no heavy dependencies either.
 
 ![](https://i.imgur.com/YT39KZ5.png)
 
