@@ -14,8 +14,8 @@ but most of them haven't been updated in years, or they depend on youtube-dl its
 
 Pure PHP-based youtube downloaders that work, and are **kept-up-to date** just do not exist.
 
-*For v4.1.x,*  
-this script uses no Javascript interpreters, no calls to shell... nothing but pure PHP with no heavy dependencies either.
+*For [v4.1.x](https://github.com/kclauhk/youtube-downloader/tree/4.1.x),*  
+the script uses no JavaScript interpreters, no calls to shell... nothing but pure PHP with no heavy dependencies either.
 
 ![](https://i.imgur.com/YT39KZ5.png)
 
@@ -53,17 +53,17 @@ composer require kclauhk/youtube-downloader "4.1.2"
   ```
   $downloadOptions = $youtube->getDownloadLinks($url, ['client'=>'android_vr', 'lang'=>'fr']);
   ```
-P.S. The old way to specify the player client(s) remains valid.
+(The old way to specify the player client(s) remains valid)
 
-### HLS manifest (available in "ios" only)
+### HLS manifest (available in "ios" and "web" only)
 To get the URL of HLS manifest  
 `$manifestUrl = $downloadOptions->getHlsManifestUrl();`
 
 ### nsig decoding is supported
-[Deno](https://deno.com/) (an open-source JavaScript runtime) is required for nsig decoding.  
+[Deno](https://deno.com/) (an open-source JavaScript runtime) and the PHP exec() function are required.  
 To use this project with Deno, you can either
 - place the Deno executable into the folder "youtube-downloader/src"; or
-- specify the path of the folder containing Deno executable by  
+- specify the folder containing the Deno executable by  
   `$youtube->getJsrt()->setPath('path of the folder');`
 
 Hence, "TVHTML5", which require nsig, is added. (client ID: "tv")  

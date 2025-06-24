@@ -24,6 +24,7 @@ class SignatureDecoder
 {
     private string $s_func_name = '';
     private array  $instructions = [];
+    private bool $exec_disabled = false;
 
     /**
      * @param string $signature
@@ -178,20 +179,29 @@ class SignatureDecoder
         $jsrt = new JsRuntime();
 
         if ($jsrt->getApp()) {
-            $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . substr(preg_replace('/\W/', '-', $signature), 0, 40);
+            if (!$this->exec_disabled) {
+                $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . substr(preg_replace('/\W/', '-', $signature), 0, 40);
 
-            if (file_put_contents("{$cache_path}.dump", $func_code . "console.log({$func_name}('{$signature}'));") === false) {
-                throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());
+                if (file_put_contents("{$cache_path}.dump", $func_code . "console.log({$func_name}('{$signature}'));") === false) {
+                    throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());
 
-            } else {
-                exec($jsrt->getApp() . ' ' . $jsrt->getCmd() . " {$cache_path}.dump >{$cache_path}.sig.tmp");
-                $sig = trim(file_get_contents("{$cache_path}.sig.tmp"));
-
-                unlink("{$cache_path}.dump");
-                unlink("{$cache_path}.sig.tmp");
+                } else {
+                    $sig = exec($jsrt->getApp() . ' ' . $jsrt->getCmd() . " {$cache_path}.dump", $output, $result_code);
+                    unlink("{$cache_path}.dump");
+                }
             }
             if (!$sig || ($sig == $signature)) {
-                throw new YouTubeException('Failed to decrypt signature');
+                $jsr_exe = basename($jsrt->getApp());
+                $os_info = php_uname('s') . ' ' . php_uname('r') . ' ' . php_uname('m');
+                if (!empty($result_code)) {
+                    throw new YouTubeException("{$jsr_exe} error (exit status: {$result_code}, '{$jsrt::$ver} {$os_info}')");
+                } elseif ($this->exec_disabled || @exec('echo EXEC') != 'EXEC') {
+                    $this->exec_disabled = true;
+                    throw new YouTubeException('exec() has been disabled for security reasons');
+                } else {
+                    $php_ver = phpversion();
+                    throw new YouTubeException("Failed to decrypt sig (func:'{$func_name}', '{$jsr_exe} {$jsrt::$ver} {$os_info} php {$php_ver}')");
+                }
             }
         }
 

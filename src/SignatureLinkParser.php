@@ -62,18 +62,22 @@ class SignatureLinkParser
                             }
                         }
                     } catch (YouTubeException $e) {
-                        $streamUrl->_error = 'Unable to decrypt nsig: ' . $e->getMessage() . '. This URL may yield HTTP Error 403.';
+                        $streamUrl->_error[] = "Unable to decrypt nsig: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
                     }
                 }
 
                 if (isset($format['url'])) {
                     // some videos do not need signature decryption
                     $streamUrl->url = $url;
+                } elseif ($signature) {
+                    try {
+                        $decoded_signature = $s_decoder->decode($signature, $playerJs->getResponseBody());
+                    } catch (YouTubeException $e) {
+                        $streamUrl->_error[] = "Unable to decrypt signature: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
+                    }
+                    $streamUrl->url = $url . (empty($decoded_signature) ? '' : "&$sp=" . urlencode($decoded_signature));
                 } else {
-                    $decoded_signature = $s_decoder->decode($signature, $playerJs->getResponseBody());
-                    $decoded_url = $url . '&' . $sp . '=' . urlencode($decoded_signature);
-
-                    $streamUrl->url = $decoded_url;
+                    continue;
                 }
             } else {
                 $streamUrl->url = $url;

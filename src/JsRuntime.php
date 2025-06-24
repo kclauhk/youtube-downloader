@@ -9,6 +9,7 @@ class JsRuntime
     protected static string $app = '';
     protected static string $dir = '';
     protected static string $cmd = '';
+    public static string $ver = '';
 
     public function setPath(string $path): bool
     {
@@ -17,6 +18,7 @@ class JsRuntime
             if ($this->getApp())
                 return true;
         } else if (is_executable($path)) {
+            static::$ver = @exec($path . ' -v');
             static::$app = $path;
             return true;
         }
@@ -41,6 +43,7 @@ class JsRuntime
         if ($files) {
             foreach ($files as $file) {
                 if (is_executable($file)) {
+                    static::$ver = @exec($file . ' -v');
                     static::$app = $file;
                     return static::$app;
                 }
