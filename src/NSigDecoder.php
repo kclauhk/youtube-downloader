@@ -13,6 +13,7 @@ class NSigDecoder
 
     private string $n_func_name = '';
     private string $n_func_code = '';
+    private bool $exec_disabled = false;
 
     /**
      * @param string $n_param
@@ -115,20 +116,29 @@ class NSigDecoder
         $jsrt = new JsRuntime();
 
         if ($jsrt->getApp()) {
-            $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . preg_replace('/\W/', '-', $n_param);
+            if (!$this->exec_disabled) {
+                $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . preg_replace('/\W/', '-', $n_param);
 
-            if (file_put_contents("{$cache_path}.dump", $func_code . "console.log({$func_name}('{$n_param}'));") === false) {
-                throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());
+                if (file_put_contents("{$cache_path}.dump", $func_code . "console.log({$func_name}('{$n_param}'));") === false) {
+                    throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());
 
-            } else {
-                exec($jsrt->getApp() . ' ' . $jsrt->getCmd() . " {$cache_path}.dump >{$cache_path}.nsig.tmp");
-                $nsig = trim(file_get_contents("{$cache_path}.nsig.tmp"));
-
-                unlink("{$cache_path}.dump");
-                unlink("{$cache_path}.nsig.tmp");
+                } else {
+                    $nsig = exec($jsrt->getApp() . ' ' . $jsrt->getCmd() . " {$cache_path}.dump", $output, $result_code);
+                    unlink("{$cache_path}.dump");
+                }
             }
             if (!$nsig || ($nsig == $n_param)) {
-                throw new YouTubeException('Failed to decrypt nsig');
+                $jsr_exe = basename($jsrt->getApp());
+                $os_info = php_uname('s') . ' ' . php_uname('r') . ' ' . php_uname('m');
+                if (!empty($result_code)) {
+                    throw new YouTubeException("{$jsr_exe} error (exit status: {$result_code}, '{$jsrt::$ver} {$os_info}')");
+                } elseif ($this->exec_disabled || @exec('echo EXEC') != 'EXEC') {
+                    $this->exec_disabled = true;
+                    throw new YouTubeException('exec() has been disabled for security reasons');
+                } else {
+                    $php_ver = phpversion();
+                    throw new YouTubeException("Failed to decrypt nsig (func:'{$func_name}', '{$jsr_exe} {$jsrt::$ver} {$os_info} php {$php_ver}')");
+                }
             }
         }
 
