@@ -68,6 +68,25 @@ class PlayerApiClients
                 'client_name' => 7,
                 'config_url' => 'https://www.youtube.com/tv',
             ],
+            'web' => [       // "web" client with Safari UA provides muxed HLS formats
+                'context' => [
+                    'client' => [
+                        'clientName' => 'WEB',
+                        'clientVersion' => '2.20250312.04.00',
+                        'userAgent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15',
+                    ],
+                ],
+                'client_name' => 1,
+            ],
+            'web_embedded' => [
+                'context' => [
+                    'client' => [
+                        'clientName' => 'WEB_EMBEDDED_PLAYER',
+                        'clientVersion' => '1.20250310.01.00',
+                    ],
+                ],
+                'client_name' => 56,
+            ],
         ];
     }
 
