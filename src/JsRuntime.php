@@ -13,11 +13,19 @@ class JsRuntime
 
     public function setPath(string $path): bool
     {
-        if (is_dir($path)) {
+        if (substr($path, 0, 4) == 'http') {
+            if ($headers = @get_headers($path, true, stream_context_create(['http' => ['timeout' => 30]]))) {
+                if (strpos($headers[0], ' 404 ') === false) {
+                    static::$app = $path;
+                    static::$ver = '(remote)';
+                    return true;
+                }
+            }
+        } elseif (is_dir($path)) {
             static::$dir = $path;
             if ($this->getApp())
                 return true;
-        } else if (is_executable($path)) {
+        } elseif (is_executable($path)) {
             static::$ver = @exec($path . ' -v');
             static::$app = $path;
             return true;

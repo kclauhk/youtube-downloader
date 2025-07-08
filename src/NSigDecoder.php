@@ -116,7 +116,14 @@ class NSigDecoder
         $jsrt = new JsRuntime();
 
         if ($jsrt->getApp()) {
-            if (!$this->exec_disabled) {
+            if ($jsrt::$ver == '(remote)') {
+                $nsig = @file_get_contents($jsrt->getApp(), false, stream_context_create([
+                    'http' => [
+                        'method' => 'POST',
+                        'header'  => 'Content-Type: text/plain',
+                        'content' => $func_code . "{$func_name}('{$n_param}');",
+                ]]));
+            } elseif (!$this->exec_disabled) {
                 $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . preg_replace('/\W/', '-', $n_param);
 
                 if (file_put_contents("{$cache_path}.dump", $func_code . "console.log({$func_name}('{$n_param}'));") === false) {
@@ -132,7 +139,7 @@ class NSigDecoder
                 $os_info = php_uname('s') . ' ' . php_uname('r') . ' ' . php_uname('m');
                 if (!empty($result_code)) {
                     throw new YouTubeException("{$jsr_exe} error (exit status: {$result_code}, '{$jsrt::$ver} {$os_info}')");
-                } elseif ($this->exec_disabled || @exec('echo EXEC') != 'EXEC') {
+                } elseif ($jsrt::$ver != '(remote)' && ($this->exec_disabled || @exec('echo EXEC') != 'EXEC')) {
                     $this->exec_disabled = true;
                     throw new YouTubeException('exec() has been disabled for security reasons');
                 } else {
