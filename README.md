@@ -60,11 +60,14 @@ To get the URL of HLS manifest
 `$manifestUrl = $downloadOptions->getHlsManifestUrl();`
 
 ### nsig decoding is supported
-[Deno](https://deno.com/) (an open-source JavaScript runtime) and the PHP exec() function are required.  
-To use this project with Deno, you can either
-- place the Deno executable into the folder "youtube-downloader/src"; or
+[Deno](https://deno.com/) (an open-source JavaScript runtime) is required. To use this project with Deno, you can either
+- place the Deno executable into the folder "youtube-downloader/src" *(PHP **exec()** required)*; or
 - specify the folder containing the Deno executable by  
-  `$youtube->getJsrt()->setPath('path of the folder');`
+  `$youtube->getJsrt()->setPath('path of the folder');` *(PHP **exec()** required)*; or
+- use [Deno Deploy](https://deno.com/deploy) and set the URL by  
+  `$youtube->getJsrt()->setPath('URL of your project');`  
+  see *[Deno Deploy setup guide](https://github.com/kclauhk/youtube-downloader/issues/5#issuecomment-3052177236)* 
+  (thanks [@alisaleem252](https://github.com/alisaleem252) for writing this guide)
 
 Hence, "TVHTML5", which require nsig, is added. (client ID: "tv")  
 
