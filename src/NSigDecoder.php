@@ -128,16 +128,14 @@ class NSigDecoder
                 }
             }
             if (!$nsig || ($nsig == $n_param)) {
-                $jsr_exe = basename($jsrt->getApp());
-                $os_info = php_uname('s') . ' ' . php_uname('r') . ' ' . php_uname('m');
                 if (!empty($result_code)) {
-                    throw new YouTubeException("{$jsr_exe} error (exit status: {$result_code}, '{$jsrt::$ver} {$os_info}')");
+                    throw new YouTubeException("Exit status {$result_code} '{$jsrt::$ver}'");
                 } elseif ($this->exec_disabled || @exec('echo EXEC') != 'EXEC') {
                     $this->exec_disabled = true;
                     throw new YouTubeException('exec() has been disabled for security reasons');
                 } else {
-                    $php_ver = phpversion();
-                    throw new YouTubeException("Failed to decrypt nsig (func:'{$func_name}', '{$jsr_exe} {$jsrt::$ver} {$os_info} php {$php_ver}')");
+                    $jsr_exe = basename($jsrt->getApp());
+                    throw new YouTubeException("Failed to decrypt nsig (func:'{$func_name}', '{$jsr_exe} {$jsrt::$ver}')");
                 }
             }
         }

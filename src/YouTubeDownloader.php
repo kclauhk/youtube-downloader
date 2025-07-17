@@ -154,7 +154,7 @@ class YouTubeDownloader
             $context['client'][$k] = $v;
         }
 
-        $response = $this->client->post('https://www.youtube.com/youtubei/v1/player?key=' . $configData->getApiKey(), json_encode([
+        $response = $this->client->post('https://www.youtube.com/youtubei/v1/player?key=' . $configData->getApiKey(), json_encode(array_filter([
                 'context' => $context,
                 'videoId' => $video_id,
                 'playbackContext' => [
@@ -164,7 +164,8 @@ class YouTubeDownloader
                     ]
                 ],
                 'racyCheckOk' => true,
-            ]), array_merge(array_filter([
+                'params' => ($clients[$client_id]['params'] ?? null),
+            ], function($v) { return ($v || is_numeric($v)); })), array_merge(array_filter([
                 'Content-Type' => 'application/json',
                 'Origin' => 'https://www.youtube.com',
                 'X-Origin' => 'https://www.youtube.com',
@@ -172,7 +173,7 @@ class YouTubeDownloader
                 'X-Goog-Visitor-Id' => $visitor_id,
                 'X-Youtube-Client-Name' => ($clients[$client_id]['client_name'] ?? null),
                 'X-Youtube-Client-Version' => $context['client']['clientVersion'],
-            ]), $this->setAuthHeaders($session_index, $user_session_id)));
+            ], function($v) { return ($v || is_numeric($v)); }), $this->setAuthHeaders($session_index, $user_session_id)));
 
         return new PlayerApiResponse($response);
     }
@@ -234,9 +235,11 @@ class YouTubeDownloader
             $player_response = $this->getPlayerApiResponse($video_id, strtolower($client_id), $youtube_config_data);
 
             preg_match('/videoId"\s*:\s*"([^"]+)"/', print_r($player_response, true), $matches);
-            if (($matches[1] ?? '') != $video_id) {
-                if ($player_response->getPlayabilityStatusReason())
-                    throw new YouTubeException($player_response->getPlayabilityStatusReason());
+            if ($status_reason = $player_response->getPlayabilityStatusReason()) {
+                throw new YouTubeException("Player response: {$status_reason}");
+            } elseif (($matches[1] ?? '') != $video_id) {
+                if ($player_error = $player_response->getErrorMessage())
+                    throw new YouTubeException("Player response: {$player_error}");
                 // throws exception if player response does not belong to the requested video
                 throw new YouTubeException('Invalid player response: got player response for video "' . ($matches[1] ?? '') . '" instead of "' . $video_id .'"');
             }
@@ -252,7 +255,7 @@ class YouTubeDownloader
             }
             $links = array_merge($links, $parsed);
 
-            $hlsManifestUrl = $hlsManifestUrl ?? $player_response->getHlsManifestUrl();
+            $hls_manifest = $hls_manifest ?? $player_response->getHlsManifestUrl();
         }
 
         if (count($client_ids) > 1) {
@@ -281,7 +284,7 @@ class YouTubeDownloader
         $info = $page->getVideoInfo($lang);
         $captions = $this->getCaptions($player_response);
 
-        return new DownloadOptions($links, $hlsManifestUrl, $info, $captions);
+        return new DownloadOptions($links, $hls_manifest, $info, $captions);
     }
 
     /**
@@ -314,11 +317,11 @@ class YouTubeDownloader
 
         if ($video_id) {
             return [
-                'default' => "https://img.youtube.com/vi/{$video_id}/default.jpg",
-                'medium' => "https://img.youtube.com/vi/{$video_id}/mqdefault.jpg",
-                'high' => "https://img.youtube.com/vi/{$video_id}/hqdefault.jpg",
-                'standard' => "https://img.youtube.com/vi/{$video_id}/sddefault.jpg",
-                'maxres' => "https://img.youtube.com/vi/{$video_id}/maxresdefault.jpg",
+                'default' => "https://i.ytimg.com/vi/{$video_id}/default.jpg",
+                'medium' => "https://i.ytimg.com/vi/{$video_id}/mqdefault.jpg",
+                'high' => "https://i.ytimg.com/vi/{$video_id}/hqdefault.jpg",
+                'standard' => "https://i.ytimg.com/vi/{$video_id}/sddefault.jpg",
+                'maxres' => "https://i.ytimg.com/vi/{$video_id}/maxresdefault.jpg",
             ];
         }
 
