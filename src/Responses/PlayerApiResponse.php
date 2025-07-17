@@ -43,4 +43,9 @@ class PlayerApiResponse extends HttpResponse
     {
         return $this->query('playabilityStatus.reason') ?: implode(' ', $this->query('playabilityStatus.messages') ?? []);
     }
+
+    public function getErrorMessage(): ?string
+    {
+        return $this->query('error.message');
+    }
 }
