@@ -180,12 +180,15 @@ class SignatureDecoder
 
         if ($jsrt->getApp()) {
             if ($jsrt::$ver == '(remote)') {
-                $sig = @file_get_contents($jsrt->getApp(), false, stream_context_create([
+                $sig = file_get_contents($jsrt->getApp(), false, stream_context_create([
                     'http' => [
                         'method' => 'POST',
                         'header'  => 'Content-Type: text/plain',
                         'content' => $func_code . "{$func_name}('{$signature}');",
+                        'ignore_errors' => true,
                 ]]));
+                if (strpos(($http_response_header ?? [''])[0], ' 200 ') === false)
+                    throw new YouTubeException("Status '" . (empty($http_response_header) ? 'no response' : $http_response_header[0]) . "'");
             } elseif (!$this->exec_disabled) {
                 $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . substr(preg_replace('/\W/', '-', $signature), 0, 40);
 
@@ -198,16 +201,14 @@ class SignatureDecoder
                 }
             }
             if (!$sig || ($sig == $signature)) {
-                $jsr_exe = basename($jsrt->getApp());
-                $os_info = php_uname('s') . ' ' . php_uname('r') . ' ' . php_uname('m');
                 if (!empty($result_code)) {
-                    throw new YouTubeException("{$jsr_exe} error (exit status: {$result_code}, '{$jsrt::$ver} {$os_info}')");
+                    throw new YouTubeException("Exit status {$result_code} '{$jsrt::$ver}'");
                 } elseif ($jsrt::$ver != '(remote)' && ($this->exec_disabled || @exec('echo EXEC') != 'EXEC')) {
                     $this->exec_disabled = true;
                     throw new YouTubeException('exec() has been disabled for security reasons');
                 } else {
-                    $php_ver = phpversion();
-                    throw new YouTubeException("Failed to decrypt sig (func:'{$func_name}', '{$jsr_exe} {$jsrt::$ver} {$os_info} php {$php_ver}')");
+                    $jsr_exe = basename($jsrt->getApp());
+                    throw new YouTubeException("Failed to decrypt sig (func:'{$func_name}', '{$jsr_exe} {$jsrt::$ver}')");
                 }
             }
         }
