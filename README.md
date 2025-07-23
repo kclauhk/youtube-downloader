@@ -39,7 +39,7 @@ composer require kclauhk/youtube-downloader
 For pure PHP version:
 
 ```bash
-composer require kclauhk/youtube-downloader "4.1.2"
+composer require kclauhk/youtube-downloader "~4.1.2"
 ```
 
 ## Changes in this fork
