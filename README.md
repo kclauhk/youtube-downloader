@@ -14,7 +14,7 @@ but most of them haven't been updated in years, or they depend on youtube-dl its
 
 Pure PHP-based youtube downloaders that work, and are **kept-up-to date** just do not exist.
 
-This script uses no Javascript interpreters, no calls to shell... nothing but pure PHP with no heavy dependencies either.
+This script uses no JavaScript interpreters, no calls to shell... nothing but pure PHP with no heavy dependencies either.
 
 ![](https://i.imgur.com/YT39KZ5.png)
 
@@ -32,7 +32,7 @@ We are not responsible for people who attempt to use this program in any way tha
 Recommended way of installing this is via [Composer](http://getcomposer.org):
 
 ```bash
-composer require kclauhk/youtube-downloader "4.1.2"
+composer require kclauhk/youtube-downloader "~4.1.2"
 ```
 
 ## Changes in this fork
@@ -46,7 +46,7 @@ composer require kclauhk/youtube-downloader "4.1.2"
   ```
   $downloadOptions = $youtube->getDownloadLinks($url, ['client'=>'android_vr', 'lang'=>'fr']);
   ```
-P.S. The old way to specify the player client(s) remains valid.
+(The old way to specify the player client(s) remains valid)
 
 ### HLS manifest (available in "ios" only)
 To get the URL of HLS manifest  
