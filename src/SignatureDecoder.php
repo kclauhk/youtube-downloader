@@ -41,7 +41,7 @@ class SignatureDecoder
                 return null;
             }
 
-            $this->instructions = (array)$this->parseFunctionCode($this->s_func_name, $js_code);
+            $this->instructions = $this->parseFunctionCode($this->s_func_name, $js_code);
         }
 
         if (count($this->instructions) === 0) {
@@ -87,7 +87,7 @@ class SignatureDecoder
             return preg_quote($matches['sig']);
         }
 
-        return null;
+        return '';
     }
 
     // convert JS code for signature decipher to PHP code
@@ -169,7 +169,7 @@ class SignatureDecoder
             }
         }
 
-        return null;
+        return [];
     }
 
     protected function decryptSignature(string $signature, string $func_name, string $func_code): ?string
