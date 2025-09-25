@@ -18,30 +18,16 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'ANDROID_VR',
-                        'clientVersion' => '1.62.27',
+                        'clientVersion' => '1.65.10',
                         'deviceMake' => 'Oculus',
                         'deviceModel' => 'Quest 3',
                         'androidSdkVersion' => 32,
-                        'userAgent' => 'com.google.android.apps.youtube.vr.oculus/1.62.27 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip',
+                        'userAgent' => 'com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip',
                         'osName' => 'Android',
                         'osVersion' => '12L',
                     ],
                 ],
                 'client_name' => 28,
-            ],
-            // "android" client is broken and links expire after 30s
-            'android' => [
-                'context' => [
-                    'client' => [
-                        'clientName' => 'ANDROID',
-                        'clientVersion' => '20.10.38',
-                        'androidSdkVersion' => 30,
-                        'userAgent' => 'com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip',
-                        'osName' => 'Android',
-                        'osVersion' => '11',
-                    ],
-                ],
-                'client_name' => 3,
             ],
             'ios' => [
                 'context' => [

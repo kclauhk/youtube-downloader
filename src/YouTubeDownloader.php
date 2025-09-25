@@ -182,7 +182,7 @@ class YouTubeDownloader
      * @throws VideoNotFoundException
      * @throws YouTubeException
      */
-    public function getDownloadLinks(string $video_id, $extra = 'ios'): DownloadOptions
+    public function getDownloadLinks(string $video_id, $extra = null): DownloadOptions
     {
         $video_id = Utils::extractVideoId($video_id);
 
@@ -191,7 +191,7 @@ class YouTubeDownloader
         }
 
         $lang = null;
-        $client_ids = ['ios'];
+        $client_ids = ['android_vr'];
         if ($extra) {
             if (is_array($extra)) {
                 if (array_key_exists('lang', $extra)) {
