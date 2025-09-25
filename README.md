@@ -93,7 +93,7 @@ You can add additional clients/modify the built-in clients by:
     ```
     $downloadOptions = $youtube->getDownloadLinks($url, $client_id);
     ```
-  - `$downloadOptions = $youtube->getDownloadLinks($url);` will use the default client "ios"
+  - `$downloadOptions = $youtube->getDownloadLinks($url);` will use the default client "android_vr"
 - `StreamFormat` object now contains `audioTrack`, `indexRange` and `isDrc` properties
 - YouTubeStreamer accepts custom request headers (this can be used for streaming media from sources that require specific headers)
   ```
