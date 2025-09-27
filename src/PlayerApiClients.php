@@ -18,30 +18,16 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'ANDROID_VR',
-                        'clientVersion' => '1.62.27',
+                        'clientVersion' => '1.65.10',
                         'deviceMake' => 'Oculus',
                         'deviceModel' => 'Quest 3',
                         'androidSdkVersion' => 32,
-                        'userAgent' => 'com.google.android.apps.youtube.vr.oculus/1.62.27 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip',
+                        'userAgent' => 'com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip',
                         'osName' => 'Android',
                         'osVersion' => '12L',
                     ],
                 ],
                 'client_name' => 28,
-            ],
-            // "android" client is broken and links expire after 30s
-            'android' => [
-                'context' => [
-                    'client' => [
-                        'clientName' => 'ANDROID',
-                        'clientVersion' => '20.10.38',
-                        'androidSdkVersion' => 30,
-                        'userAgent' => 'com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip',
-                        'osName' => 'Android',
-                        'osVersion' => '11',
-                    ],
-                ],
-                'client_name' => 3,
             ],
             'ios' => [
                 'context' => [
@@ -61,7 +47,7 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'TVHTML5',
-                        'clientVersion' => '7.20250326.09.00',
+                        'clientVersion' => '7.20250923.13.00',
                         'userAgent' => 'Mozilla/5.0 (ChromiumStylePlatform) Cobalt/Version',
                     ],
                 ],
@@ -72,7 +58,7 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'WEB',
-                        'clientVersion' => '2.20250312.04.00',
+                        'clientVersion' => '2.20250925.01.00',
                         'userAgent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15',
                     ],
                 ],
@@ -82,7 +68,7 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'WEB_EMBEDDED_PLAYER',
-                        'clientVersion' => '1.20250310.01.00',
+                        'clientVersion' => '1.20250923.21.00',
                     ],
                 ],
                 'client_name' => 56,
