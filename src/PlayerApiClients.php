@@ -82,7 +82,7 @@ class PlayerApiClients
      * @param string $config_url    (optional) the URL of client config
      * @return boolean
      */
-    public function setClient(string $client_id, array $context, string $config_url = null): bool
+    public function setClient(string $client_id, array $context, ?string $config_url = null): bool
     {
         $ctx_c = Utils::arrayGet($context, 'context.client') ?? [];
         $has_name = (bool)Utils::arrayGet($context, 'clientName') || (bool)Utils::arrayGet($ctx_c, 'clientName');
