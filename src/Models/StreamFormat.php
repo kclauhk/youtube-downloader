@@ -2,6 +2,7 @@
 
 namespace YouTube\Models;
 
+#[\AllowDynamicProperties]
 class StreamFormat extends JsonObject
 {
     public ?int $itag = null;

@@ -22,6 +22,7 @@ class YouTubeDownloader
     );
 
     protected Browser $client;
+    protected PlayerApiClients $api_clients;
 
     function __construct()
     {
@@ -244,8 +245,10 @@ class YouTubeDownloader
             $player = new VideoPlayerJs($response);
 
             $parsed = SignatureLinkParser::parseLinks($player_response, $player);
-            foreach ($parsed as $k => $v) {
-                $parsed[$k]->pref = -$i;
+            if (count($client_ids) > 1) {
+                foreach ($parsed as $k => $v) {
+                    $parsed[$k]->_pref = -$i;
+                }
             }
             $links = array_merge($links, $parsed);
 
@@ -260,14 +263,14 @@ class YouTubeDownloader
                                        $b->height <=> $a->height ?:
                                        $a->itag <=> $b->itag ?:
                                        $a->isDrc <=> $b->isDrc ?:
-                                       $b->pref <=> $a->pref
+                                       $b->_pref <=> $a->_pref
             );
             // remove duplicated formats
             foreach ($links as $k => $v) {
                 if ($v->itag === ($i ?? 0) && $v->isDrc === ($c ?? false)) {
                     unset($links[$k]);
                 } else {
-                    unset($links[$k]->pref);
+                    unset($links[$k]->_pref);
                     $i = $v->itag;
                     $c = $v->isDrc;
                 }
