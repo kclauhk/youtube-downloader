@@ -161,8 +161,7 @@ class YouTubeDownloader
                 'playbackContext' => [
                     'contentPlaybackContext' => [
                         'html5Preference' => 'HTML5_PREF_WANTS',
-                        // force player '0004de42' and signature timestamp 20348
-                        'signatureTimestamp' => 20348,  //(int)$sig_timestamp,
+                        'signatureTimestamp' => (int)$sig_timestamp,
                     ]
                 ],
                 'racyCheckOk' => true,
@@ -247,10 +246,7 @@ class YouTubeDownloader
             }
 
             // get player.js location that holds URL signature decipher function
-            //$player_url = $page->getPlayerScriptUrl();
-
-            // force player '0004de42' and signature timestamp 20348
-            $player_url = 'https://www.youtube.com/s/player/0004de42/player_ias.vflset/en_US/base.js';
+            $player_url = $page->getPlayerScriptUrl();
             $response = $this->client->get($player_url);
             $player = new VideoPlayerJs($response);
 
