@@ -83,9 +83,19 @@ class SignatureLinkParser
                 $streamUrl->url = $url;
             }
 
-            $return[] = $streamUrl;
+            $return[] = self::detectSR($streamUrl);
         }
 
         return $return;
+    }
+
+    // check whether $format is "super resolution" (AI-upscaled)
+    protected static function detectSR(StreamFormat $format): StreamFormat
+    {
+        if (preg_match('/\Wsr%3D1\W/', $format->url)) {
+            $format->isSr = true;
+        }
+
+        return $format;
     }
 }
