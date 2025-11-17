@@ -14,6 +14,18 @@ class PlayerApiClients
         // InnerTube Clients
         // list of known clients: https://github.com/zerodytrash/YouTube-Internal-Clients
         static::$clients = static::$clients ?? [
+            'android' => [
+                'context' => [
+                    'client' => [
+                        'clientName' => 'ANDROID',
+                        'clientVersion' => '20.42.40',
+                        'userAgent' => 'com.google.android.youtube/20.42.40 (Linux; U; Android 14) gzip',
+                        'osName' => 'Android',
+                        'osVersion' => '14',
+                    ],
+                ],
+                'client_name' => 3,
+            ],
             'android_vr' => [
                 'context' => [
                     'client' => [
