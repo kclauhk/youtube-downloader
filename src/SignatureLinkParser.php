@@ -54,6 +54,10 @@ class SignatureLinkParser
                 $streamUrl->url = $url;
             }
 
+            if (preg_match('/\Wsr%3D1\W/', $streamUrl->url)) {
+                $streamUrl->isSr = true;
+            }
+
             $return[] = $streamUrl;
         }
 
