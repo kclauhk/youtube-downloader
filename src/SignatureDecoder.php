@@ -68,7 +68,7 @@ class SignatureDecoder
                 }
             }
 
-        } else if ($this->instructions['type'] == 'js') {
+        } elseif ($this->instructions['type'] == 'js') {
             $func_code = implode(";\n", $this->instructions[0]) . ";\n";
 
             $signature = $this->decryptSignature($signature, $this->s_func_name, $func_code);
@@ -81,9 +81,9 @@ class SignatureDecoder
     {
         if (preg_match('@\b(?P<var>[a-zA-Z0-9_$]+)&&\((?P=var)=(?P<sig>[a-zA-Z0-9_$]{2,})\(decodeURIComponent\((?P=var)\)\)@is', $js_code, $matches)) {
             return preg_quote($matches['sig']);
-        } else if (preg_match('@(?P<sig>[a-zA-Z0-9_$]+)\s*=\s*function\(\s*(?P<arg>[a-zA-Z0-9_$]+)\s*\)\s*{\s*(?P=arg)\s*=\s*(?P=arg)\.split\(\s*""\s*\)\s*;\s*[^}]+;\s*return\s+(?P=arg)\.join\(\s*""\s*\)@is', $js_code, $matches)) {
+        } elseif (preg_match('@(?P<sig>[a-zA-Z0-9_$]+)\s*=\s*function\(\s*(?P<arg>[a-zA-Z0-9_$]+)\s*\)\s*{\s*(?P=arg)\s*=\s*(?P=arg)\.split\(\s*""\s*\)\s*;\s*[^}]+;\s*return\s+(?P=arg)\.join\(\s*""\s*\)@is', $js_code, $matches)) {
             return preg_quote($matches['sig']);
-        } else if (preg_match('@(?:\b|[^a-zA-Z0-9_$])(?P<sig>[a-zA-Z0-9_$]{2,})\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\)(?:;[a-zA-Z0-9_$]{2}\.[a-zA-Z0-9_$]{2}\(a,\d+\))?@is', $js_code, $matches)) {
+        } elseif (preg_match('@(?:\b|[^a-zA-Z0-9_$])(?P<sig>[a-zA-Z0-9_$]{2,})\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\)(?:;[a-zA-Z0-9_$]{2}\.[a-zA-Z0-9_$]{2}\(a,\d+\))?@is', $js_code, $matches)) {
             return preg_quote($matches['sig']);
         }
 
@@ -99,7 +99,7 @@ class SignatureDecoder
         if (preg_match('/function\s+' . $func_name . '.*{(.*?)}/', $player_html, $matches)) {
             $js_code = $matches[1];
             $js_func = $matches[0];
-        } else if (preg_match('/' . $func_name . '=\s*function\s*\(\s*\S+\s*\)\s*{(.*?)}/', $player_html, $matches)) {
+        } elseif (preg_match('/' . $func_name . '=\s*function\s*\(\s*\S+\s*\)\s*{(.*?)}/', $player_html, $matches)) {
             $js_code = $matches[1];
             $js_func = 'var ' . $matches[0];
         }
@@ -141,7 +141,7 @@ class SignatureDecoder
 
                 return array($instructions, 'type' => 'instructions');
 
-            } else if (preg_match_all('/[;{]([\w$]+)\[/', $js_code, $matches)) {
+            } elseif (preg_match_all('/[;{]([\w$]+)\[/', $js_code, $matches)) {
 
                 if ((new JsRuntime())->getApp()) {
 
@@ -177,6 +177,7 @@ class SignatureDecoder
         $func_name = stripslashes($func_name);
 
         $jsrt = new JsRuntime();
+        $this->exec_disabled = !function_exists('exec');
 
         if ($jsrt->getApp()) {
             if ($jsrt::$ver == '(remote)') {
@@ -196,11 +197,11 @@ class SignatureDecoder
                     throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());
 
                 } else {
-                    $sig = exec($jsrt->getApp() . ' ' . $jsrt->getCmd() . " {$cache_path}.dump", $output, $result_code);
+                    $sig = exec($jsrt->getApp() . ' ' . $jsrt->getArg() . " {$cache_path}.dump", $output, $result_code);
                     unlink("{$cache_path}.dump");
                 }
             }
-            if (!$sig || ($sig == $signature)) {
+            if (empty($sig) || ($sig == $signature)) {
                 if (!empty($result_code)) {
                     throw new YouTubeException("Exit status {$result_code} '{$jsrt::$ver}'");
                 } elseif ($jsrt::$ver != '(remote)' && ($this->exec_disabled || @exec('echo EXEC') != 'EXEC')) {

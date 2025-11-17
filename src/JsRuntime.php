@@ -8,7 +8,7 @@ class JsRuntime
 {
     protected static string $app = '';
     protected static string $dir = '';
-    protected static string $cmd = '';
+    protected static string $arg = '';
     public static string $ver = '';
 
     public function setPath(string $path): bool
@@ -26,7 +26,7 @@ class JsRuntime
             if ($this->getApp())
                 return true;
         } elseif (is_executable($path)) {
-            static::$ver = @exec($path . ' -v');
+            static::$ver = (function_exists('exec') ? exec($path . ' -v') : '');
             static::$app = $path;
             return true;
         }
@@ -51,7 +51,7 @@ class JsRuntime
         if ($files) {
             foreach ($files as $file) {
                 if (is_executable($file)) {
-                    static::$ver = @exec($file . ' -v');
+                    static::$ver = (function_exists('exec') ? exec($file . ' -v') : '');
                     static::$app = $file;
                     return static::$app;
                 }
@@ -64,13 +64,13 @@ class JsRuntime
         return null;
     }
 
-    public function setCmd(string $command)
+    public function setArg(string $command)
     {
-        static::$cmd = $command;
+        static::$arg = $command;
     }
 
-    public function getCmd(): string
+    public function getArg(): string
     {
-        return static::$cmd;
+        return static::$arg;
     }
 }
