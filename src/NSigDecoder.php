@@ -114,6 +114,7 @@ class NSigDecoder
         $func_name = stripslashes($func_name);
 
         $jsrt = new JsRuntime();
+        $this->exec_disabled = !function_exists('exec');
 
         if ($jsrt->getApp()) {
             if (!$this->exec_disabled) {
@@ -123,11 +124,11 @@ class NSigDecoder
                     throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());
 
                 } else {
-                    $nsig = exec($jsrt->getApp() . ' ' . $jsrt->getCmd() . " {$cache_path}.dump", $output, $result_code);
+                    $nsig = exec($jsrt->getApp() . ' ' . $jsrt->getArg() . " {$cache_path}.dump", $output, $result_code);
                     unlink("{$cache_path}.dump");
                 }
             }
-            if (!$nsig || ($nsig == $n_param)) {
+            if (empty($nsig) || ($nsig == $n_param)) {
                 if (!empty($result_code)) {
                     throw new YouTubeException("Exit status {$result_code} '{$jsrt::$ver}'");
                 } elseif ($this->exec_disabled || @exec('echo EXEC') != 'EXEC') {
