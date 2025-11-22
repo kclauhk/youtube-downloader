@@ -44,40 +44,39 @@ composer require kclauhk/youtube-downloader "~4.1.2"
 
 ## Changes in this fork
 
-### translated video details (if available) is supported
+### translated video details (if available) are supported
 - To specify the desired language (by YouTube language code)
-  ```
+  ```php
   $downloadOptions = $youtube->getDownloadLinks($url, ['lang'=>'fr']);
   ```
 - To specify the desired language and player client
-  ```
-  $downloadOptions = $youtube->getDownloadLinks($url, ['client'=>'android_vr', 'lang'=>'fr']);
+  ```php
+  $downloadOptions = $youtube->getDownloadLinks($url, ['client'=>'android', 'lang'=>'fr']);
   ```
 (The old way to specify the player client(s) remains valid)
 
-### HLS manifest (available in "ios" and "web" only)
-To get the URL of HLS manifest  
-`$manifestUrl = $downloadOptions->getHlsManifestUrl();`
+### HLS manifest (available in "ios"/"web" and live streams)
+To get the URL of the HLS manifest  
+`$manifestUrl = $downloadOptions->getHlsManifestUrl();`  
 
-### nsig decoding is supported
-[Deno](https://deno.com/) (an open-source JavaScript runtime) is required. To use this project with Deno, you can either
-- place the Deno executable into the folder "youtube-downloader/src" *(PHP **exec()** required)*; or
-- specify the folder containing the Deno executable by  
-  `$youtube->getJsrt()->setPath('path of the folder');` *(PHP **exec()** required)*; or
-- use [Deno Deploy](https://deno.com/deploy) and set the URL by  
-  `$youtube->getJsrt()->setPath('URL of your project');`  
-  see *[Deno Deploy setup guide](https://github.com/kclauhk/youtube-downloader/issues/5#issuecomment-3052177236)* 
-  (thanks [@alisaleem252](https://github.com/alisaleem252) for writing this guide)
+### n/sig decoding is supported
+[Deno](https://deno.com/) (an open-source JavaScript runtime) and the PHP **exec()** function are required. To use this project with Deno, you can either:
+- put the Deno binary executable into the "vendor/kclauhk/youtube-downloader/src" directory; or
+- specify the directory containing the binary executable by  
+  `$youtube->getJsrt()->setPath('path of the directory');`
 
-Hence, "TVHTML5", which require nsig, is added. (client ID: "tv")  
+You may use other JS runtimes. [Here](https://github.com/kclauhk/youtube-downloader/blob/remoteJS/JSRUNTIME.md#javascript-runtime) are some examples.
+
+Hence, "TVHTML5", which requires n decoding, is added. (client ID: `tv`)  
 
 ### player client can be added/modified
+The currently available clients are `android`, `android_vr`, `ios`, `tv`, `web` (Safari user agent) and `web_embedded`. By default, `android` is used.
 You can add additional clients/modify the built-in clients by:  
-  `$youtube->getApiClients()->setClient($client_id, $client_data);`
-- `$client_id`   - ID of the player client
-- `$client_data` - client data in array of key-value pairs which must contains "clientName" and "clientVersion",  
+  `$youtube->getApiClients()->setClient($clientId, $context);`
+- `$clientId` - ID of the player client
+- `$context`  - data in an array of key-value pairs which must contain "clientName" and "clientVersion",  
   for example, adding "WEB_EMBEDDED_PLAYER":  
-  ```
+  ```php
   $client = array(
       'clientName' => 'WEB_EMBEDDED_PLAYER',
       'clientVersion' => '1.20241201.00.00',
@@ -85,18 +84,18 @@ You can add additional clients/modify the built-in clients by:
   $youtube->getApiClients()->setClient('web_embedded', $client);
   $downloadOptions = $youtube->getDownloadLinks($url, 'web_embedded');    // use 'web_embedded'
   ```
-  (client which requires PO token is not supported)
+  (client which requires a PO token is not supported)
 
 ### Changes since [v4.1.0](https://github.com/kclauhk/youtube-downloader/releases/tag/v4.1.0)
 - Two YouTube clients (client ID: "android_vr" and "ios") are built into YouTubeDownloader
   - To specify a player client
+    ```php
+    $downloadOptions = $youtube->getDownloadLinks($url, $clientId);
     ```
-    $downloadOptions = $youtube->getDownloadLinks($url, $client_id);
-    ```
-  - `$downloadOptions = $youtube->getDownloadLinks($url);` will use the default client "android_vr"
+  - `$downloadOptions = $youtube->getDownloadLinks($url);` will use the default client
 - `StreamFormat` object now contains `audioTrack`, `indexRange` and `isDrc` properties
 - YouTubeStreamer accepts custom request headers (this can be used for streaming media from sources that require specific headers)
-  ```
+  ```php
   $headers = array("origin: $origin", "referer: $referer");
   $youtube->stream($url, $headers);
   ```
@@ -132,18 +131,26 @@ For typical usage, you are probably interested in dealing with combined streams,
 - Stream YouTube videos directly from your server:
 
 ```php
-$youtube = new \YouTube\YouTubeStreamer();
-$youtube->stream('https://r4---sn-n4v7knll.googlevideo.com/videoplayback?...');
+$streamer = new \YouTube\YouTubeStreamer();
+$streamer->stream('https://r4---sn-n4v7knll.googlevideo.com/videoplayback?...');
+```
+
+- Pass in your own cookies to YouTubeStreamer
+
+Cookies are needed for accessing stream links of private/age-restricted videos obtained through the web/web_embedded client. Set cookie file before streaming:
+
+```php
+$streamer->setCookieFile('./your_cookies.txt');
 ```
 
 - Pass in your own cookies/user-agent
 
-If you try downloading age-restricted videos, YouTube will ask you to login. The only way to make this work, is to login to your YouTube account in your own web-browser, export those newly set cookies from your browser into a file, and then pass it all to youtube-downloader for use.
+If you try downloading private/age-restricted videos, YouTube will ask you to login. The only way to make this work, is to login to your YouTube account in your own web-browser, export those newly set cookies from your browser into a file, and then pass it all to youtube-downloader for use.
 
 ```php
 $youtube = new YouTubeDownloader();
 $youtube->getBrowser()->setCookieFile('./your_cookies.txt');
-$youtube->getBrowser()->setUserAgent('Opera 7.6');
+$youtube->getBrowser()->setUserAgent('Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0');
 ```
 
 See also:  
