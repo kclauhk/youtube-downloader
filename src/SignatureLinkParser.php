@@ -11,7 +11,7 @@ use YouTube\Utils\Utils;
 class SignatureLinkParser
 {
     /**
-     * @param PlayerApiResponse $apiResponse
+     * @param PlayerApiResponse  $apiResponse
      * @param VideoPlayerJs|null $playerJs
      * @return StreamFormat[]
      */
@@ -22,21 +22,21 @@ class SignatureLinkParser
         // final response
         $return = array();
 
-        $n_decoder = new NSigDecoder();
-        $s_decoder = new SignatureDecoder();
+        $nDecoder = new NSigDecoder();
+        $sDecoder = new SignatureDecoder();
+        $ciphers = array();
+        $nParams = array();
+        $signatures = array();
         $decoded_n = array();
         $decoded_s = array();
-        $ciphers = array();
-        $n_params = array();
-        $signatures = array();
 
-        if (preg_match($n_decoder::REGEX_RETURN_CODE, $playerJs->getResponseBody())) {
-            $use_solver = false;
+        if (preg_match($nDecoder::REGEX_RETURN_CODE, $playerJs->getResponseBody())) {
+            $useSolver = false;
         } else {
-            $use_solver = true;
+            $useSolver = true;
         }
 
-        foreach ($formats_combined as $k=>$format) {
+        foreach ($formats_combined as $k => $format) {
             if (isset($format['url'])) {
                 // appear as "url"
                 $url = $format['url'];
@@ -57,11 +57,11 @@ class SignatureLinkParser
                 }
             }
 
-            if ($use_solver) {
+            if ($useSolver) {
                 if (preg_match('/&n=(.*?)&/', ($url ?? ''), $matches)) {
-                    $n_params[] = $matches[1];
+                    $nParams[] = $matches[1];
                 }
-                continue;
+                continue;   // skip the following if JsChallengeSolver will be used
             }
 
             // don't use JsChallengeSolver (deprecated but kept as fallback)
@@ -72,17 +72,17 @@ class SignatureLinkParser
                     // decrypt n
                     try {
                         if ((new JsRuntime())->getApp()) {
-                            $n_param = $matches[1];
+                            $nParam = $matches[1];
 
-                            if (!array_key_exists($n_param, $decoded_n)) {
-                                $decoded_n[$n_param] = $n_decoder->decode($n_param, $playerJs->getResponseBody());
+                            if (!array_key_exists($nParam, $decoded_n)) {
+                                $decoded_n[$nParam] = $nDecoder->decode($nParam, $playerJs->getResponseBody());
                             }
-                            if ($decoded_n[$n_param] != $n_param) {
-                                $url = str_replace('&n=' . $n_param . '&', '&n=' . $decoded_n[$n_param] . '&', $url);
+                            if ($decoded_n[$nParam] != $nParam) {
+                                $url = str_replace('&n=' . $nParam . '&', '&n=' . $decoded_n[$nParam] . '&', $url);
                             }
                         }
                     } catch (YouTubeException $e) {
-                        $streamUrl->_error[] = "Unable to decrypt nsig: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
+                        $streamUrl->_error[] = "Unable to decrypt n: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
                     }
                 }
 
@@ -91,9 +91,9 @@ class SignatureLinkParser
                     $streamUrl->url = $url;
                 } elseif ($signature) {
                     try {
-                        $decoded_signature = $s_decoder->decode($signature, $playerJs->getResponseBody());
+                        $decoded_signature = $sDecoder->decode($signature, $playerJs->getResponseBody());
                     } catch (YouTubeException $e) {
-                        $streamUrl->_error[] = "Unable to decrypt signature: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
+                        $streamUrl->_error[] = "Unable to decrypt s: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
                     }
                     $streamUrl->url = $url . (empty($decoded_signature) ? '' : "&$sp=" . urlencode($decoded_signature));
                 } else {
@@ -106,27 +106,25 @@ class SignatureLinkParser
             $return[] = self::detectSR($streamUrl);
         }
 
-        if ($use_solver) {
+        if ($useSolver) {
             $error = null;
 
-            if (($n_params || $signatures) && $playerJs) {
-                $n_params = array_unique($n_params);
+            if (($nParams || $signatures) && $playerJs) {
+                $nParams = array_unique($nParams);
                 $signatures = array_unique($signatures);
 
                 try {
-                    if ((new JsRuntime())->getApp()) {
-                        $solver = new JsChallengeSolver();
-                        if ($result = $solver->solve($n_params, $signatures, $playerJs->getResponseBody())) {
-                            $decoded_n = $result[0]['data'];
-                            $decoded_s = $result[1]['data'];
-                        }
+                    $solver = new JsChallengeSolver();
+                    if ($result = $solver->solve($nParams, $signatures, $playerJs->getResponseBody())) {
+                        $decoded_n = $result[0]['data'];
+                        $decoded_s = $result[1]['data'];
                     }
                 } catch (YouTubeException $e) {
                     $error = "Unable to solve JS challenges: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
                 }
             }
 
-            foreach ($formats_combined as $k=>$format) {
+            foreach ($formats_combined as $k => $format) {
                 $streamUrl = new StreamFormat($format);
 
                 if (array_key_exists($k, $ciphers)) {

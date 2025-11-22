@@ -13,7 +13,6 @@ class NSigDecoder
 
     private string $n_func_name = '';
     private string $n_func_code = '';
-    private bool $exec_disabled = false;
 
     /**
      * @param string $n_param
@@ -24,7 +23,7 @@ class NSigDecoder
     {
         if (empty($this->n_func_code)) {
             $var_code = $this->extractGlobalVar($js_code);
-            
+
             $n_func = $this->extractNFunction($js_code);
             if ($n_func) {
                 $this->n_func_name = $n_func[0];
@@ -112,45 +111,25 @@ class NSigDecoder
     protected function decryptNsig(string $n_param, string $func_name, string $func_code): string
     {
         $func_name = stripslashes($func_name);
+        $result = $n_param;
 
         $jsrt = new JsRuntime();
-        $this->exec_disabled = !function_exists('exec');
 
         if ($jsrt->getApp()) {
             if ($jsrt::$ver == '(remote)') {
-                $nsig = file_get_contents($jsrt->getApp(), false, stream_context_create([
-                    'http' => [
-                        'method' => 'POST',
-                        'header'  => 'Content-Type: text/plain',
-                        'content' => $func_code . "{$func_name}('{$n_param}');",
-                        'ignore_errors' => true,
-                ]]));
-                if (strpos(($http_response_header ?? [''])[0], ' 200 ') === false)
-                    throw new YouTubeException("Status '" . (empty($http_response_header) ? 'no response' : $http_response_header[0]) . "'");
-            } elseif (!$this->exec_disabled) {
-                $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . preg_replace('/\W/', '-', $n_param);
-
-                if (file_put_contents("{$cache_path}.dump", $func_code . "console.log({$func_name}('{$n_param}'));") === false) {
-                    throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());
-
-                } else {
-                    $nsig = exec($jsrt->getApp() . ' ' . $jsrt->getArg() . " {$cache_path}.dump", $output, $result_code);
-                    unlink("{$cache_path}.dump");
-                }
+                $code_str = "%s%s('%s');";
+            } else {
+                $code_str = "%sconsole.log(%s('%s'));";
             }
-            if (empty($nsig) || ($nsig == $n_param)) {
-                if (!empty($result_code)) {
-                    throw new YouTubeException("Exit status {$result_code} '{$jsrt::$ver}'");
-                } elseif ($jsrt::$ver != '(remote)' && ($this->exec_disabled || @exec('echo EXEC') != 'EXEC')) {
-                    $this->exec_disabled = true;
-                    throw new YouTubeException('exec() has been disabled for security reasons');
-                } else {
-                    $jsr_exe = basename($jsrt->getApp());
-                    throw new YouTubeException("Failed to decrypt nsig (func:'{$func_name}', '{$jsr_exe} {$jsrt::$ver}')");
-                }
+            $code_arg = [$func_code, $func_name, $n_param];
+
+            try {
+                $result = $jsrt->run('n', $code_str, $code_arg, $n_param);
+            } catch (YouTubeException $e) {
+                throw new YouTubeException($e->getMessage());
             }
         }
 
-        return $nsig ?: $n_param;
+        return $result;
     }
 }
