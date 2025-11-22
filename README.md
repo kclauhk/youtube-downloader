@@ -46,11 +46,11 @@ composer require kclauhk/youtube-downloader "~4.1.2"
 
 ### translated video details (if available) is supported
 - To specify the desired language (by YouTube language code)
-  ```
+  ```php
   $downloadOptions = $youtube->getDownloadLinks($url, ['lang'=>'fr']);
   ```
 - To specify the desired language and player client
-  ```
+  ```php
   $downloadOptions = $youtube->getDownloadLinks($url, ['client'=>'android_vr', 'lang'=>'fr']);
   ```
 (The old way to specify the player client(s) remains valid)
@@ -66,8 +66,7 @@ To get the URL of HLS manifest
   `$youtube->getJsrt()->setPath('path of the folder');` *(PHP **exec()** required)*; or
 - use [Deno Deploy](https://deno.com/deploy) and set the URL by  
   `$youtube->getJsrt()->setPath('URL of your project');`  
-  see *[Deno Deploy setup guide](https://github.com/kclauhk/youtube-downloader/issues/5#issuecomment-3052177236)* 
-  (thanks [@alisaleem252](https://github.com/alisaleem252) for writing this guide)
+  see *[Deno Deploy setup guide](https://github.com/kclauhk/youtube-downloader/blob/deno-deploy/JSRUNTIME.md#deno-deploy)* 
 
 Hence, "TVHTML5", which require nsig, is added. (client ID: "tv")  
 
@@ -77,7 +76,7 @@ You can add additional clients/modify the built-in clients by:
 - `$client_id`   - ID of the player client
 - `$client_data` - client data in array of key-value pairs which must contains "clientName" and "clientVersion",  
   for example, adding "WEB_EMBEDDED_PLAYER":  
-  ```
+  ```php
   $client = array(
       'clientName' => 'WEB_EMBEDDED_PLAYER',
       'clientVersion' => '1.20241201.00.00',
@@ -90,13 +89,13 @@ You can add additional clients/modify the built-in clients by:
 ### Changes since [v4.1.0](https://github.com/kclauhk/youtube-downloader/releases/tag/v4.1.0)
 - Two YouTube clients (client ID: "android_vr" and "ios") are built into YouTubeDownloader
   - To specify a player client
-    ```
+    ```php
     $downloadOptions = $youtube->getDownloadLinks($url, $client_id);
     ```
   - `$downloadOptions = $youtube->getDownloadLinks($url);` will use the default client "android_vr"
 - `StreamFormat` object now contains `audioTrack`, `indexRange` and `isDrc` properties
 - YouTubeStreamer accepts custom request headers (this can be used for streaming media from sources that require specific headers)
-  ```
+  ```php
   $headers = array("origin: $origin", "referer: $referer");
   $youtube->stream($url, $headers);
   ```
@@ -132,8 +131,16 @@ For typical usage, you are probably interested in dealing with combined streams,
 - Stream YouTube videos directly from your server:
 
 ```php
-$youtube = new \YouTube\YouTubeStreamer();
-$youtube->stream('https://r4---sn-n4v7knll.googlevideo.com/videoplayback?...');
+$streamer = new \YouTube\YouTubeStreamer();
+$streamer->stream('https://r4---sn-n4v7knll.googlevideo.com/videoplayback?...');
+```
+
+- Pass in your own cookies to YouTubeStreamer
+
+Cookies are needed for accessing stream links of private/age-restricted videos obtained through the web/web_embedded client. Set cookie file before streaming.
+
+```php
+$streamer->setCookieFile('./your_cookies.txt');
 ```
 
 - Pass in your own cookies/user-agent
