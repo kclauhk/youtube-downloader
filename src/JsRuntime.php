@@ -6,36 +6,40 @@ use YouTube\Exception\YouTubeException;
 
 class JsRuntime
 {
-    protected static string $app = '';
+    protected static ?string $app = '';
     protected static string $dir = '';
     protected static string $arg = '';
+    protected static string $tmp = '';  // path of user-defined directory for temporary files
     public static string $ver = '';
 
     public function setPath(string $path): bool
     {
-        if (is_dir($path)) {
-            static::$dir = $path;
-            if ($this->getApp())
+        if ($this->isExecAvailable() && realpath($path)) {
+            if (is_dir($path)) {
+                static::$dir = $path;
+                if ($this->getApp())
+                    return true;
+            } elseif (is_executable($path)) {
+                static::$ver = exec($path . ' -v');
+                static::$app = $path;
                 return true;
-        } elseif (is_executable($path)) {
-            static::$ver = (function_exists('exec') ? exec($path . ' -v') : '');
-            static::$app = $path;
-            return true;
+            }
         }
 
-        throw new YouTubeException("Deno not found: invalid path \"{$path}\"");
-        return false;
+        throw new YouTubeException("JS runtime not found: invalid path \"{$path}\"");
     }
 
     public function getApp(): ?string
     {
-        if (static::$app) {
+        if (static::$app != '') {
             return static::$app;
+        } elseif ($this->isExecAvailable()) {
+            static::$app = null;
         }
 
         $path = static::$dir ?: __DIR__;
 
-        $files = glob($path . DIRECTORY_SEPARATOR . 'deno{.exe,}', GLOB_BRACE);
+        $files = array_filter(glob($path . DIRECTORY_SEPARATOR . 'deno{.exe,}', GLOB_BRACE), 'is_file');
         if (empty($files) && $path != __DIR__) {
             $files = glob(__DIR__ . DIRECTORY_SEPARATOR . 'deno{.exe,}', GLOB_BRACE);
         }
@@ -43,7 +47,7 @@ class JsRuntime
         if ($files) {
             foreach ($files as $file) {
                 if (is_executable($file)) {
-                    static::$ver = (function_exists('exec') ? exec($file . ' -v') : '');
+                    static::$ver = exec($file . ' -v');
                     static::$app = $file;
                     return static::$app;
                 }
@@ -53,16 +57,86 @@ class JsRuntime
             throw new YouTubeException('Deno not found');
         }
 
-        return null;
+        if (substr(static::$ver, 0, 4) == 'deno')
+            static::$arg = '--ext=js --no-code-cache --no-prompt --no-remote --no-lock --node-modules-dir=none --no-config';
+
+        return static::$app;
     }
 
-    public function setArg(string $command)
+    public function setArg(string $arguments)
     {
-        static::$arg = $command;
+        static::$arg = $arguments;
     }
 
     public function getArg(): string
     {
         return static::$arg;
+    }
+
+    /**
+     * @param string    $type       type of challenge
+     * @param string    $codeStr    JavaScript code or format string of JavaScript code
+     * @param array     $spValue    values for format specifiers
+     * @param string    $value      original value of n/s
+     * @return string/null          return value of JavaScript code or null if no return value
+     * @throws YouTubeException
+     */
+    public function run(string $type, string $codeStr, array $spValue = [], string $value = null): ?string
+    {
+        if (empty(static::$app))
+            throw new YouTubeException('JS runtime not available');
+
+        $result = null;
+        try {
+            $jsCode = empty($spValue) ? $codeStr : vsprintf($codeStr, $spValue);
+        } catch (\Throwable $e) {
+            throw new YouTubeException('Function code error (' . $e->getMessage() . ')');
+        }
+
+        $tmpFile = $this->getTempDir() . 'yt_' . hash('sha1', uniqid('', true)) . '.dump';
+        if (file_put_contents($tmpFile, $jsCode) === false) {
+            throw new YouTubeException('Failed to create files in ' . $this->getTempDir());
+
+        } else {
+            $result = exec(static::$app . ' ' . static::$arg . " {$tmpFile}", $output, $resultCode);
+            unlink($tmpFile);
+        }
+
+        if (empty($result) || ($result == $value)) {
+            $jsrExe = basename(static::$app);
+            if (!empty($resultCode)) {
+                throw new YouTubeException("Exit status {$resultCode} ('{$jsrExe} " . static::$ver . "')");
+            } else {
+                throw new YouTubeException(
+                    "Failed to solve {$type} ("
+                    . (!empty($spValue) ? "func:'" . substr($spValue[1], 0, 20) . "' " : '')
+                    . "'{$jsrExe} " . static::$ver . "')");
+            }
+        }
+
+        return $result;
+    }
+
+    protected function isExecAvailable(): bool
+    {
+        if (!function_exists('exec') || @exec('echo EXEC') != 'EXEC')
+            throw new YouTubeException('exec() is not available therefore JS runtimes cannot be used');
+
+        return true;
+    }
+
+    public function setTempDir($path)
+    {
+        if (empty(realpath($path)) || !is_dir($path)) {
+            trigger_error("{$path}: No such directory", E_USER_WARNING);
+        } elseif (!is_writable(realpath($path))) {
+            trigger_error("{$path}: Permission denied", E_USER_WARNING);
+        } else
+            static::$tmp = realpath($path);
+    }
+
+    public function getTempDir(): string
+    {
+        return realpath(static::$tmp ?: ini_get('upload_tmp_dir') ?: sys_get_temp_dir()) . DIRECTORY_SEPARATOR;
     }
 }

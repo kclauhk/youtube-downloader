@@ -24,7 +24,6 @@ class SignatureDecoder
 {
     private string $s_func_name = '';
     private array  $instructions = [];
-    private bool $exec_disabled = false;
 
     /**
      * @param string $signature
@@ -37,16 +36,14 @@ class SignatureDecoder
             $this->s_func_name = $this->parseFunctionName($js_code);
 
             if (!$this->s_func_name) {
-                //Could not parse signature function name
-                return null;
+                throw new YouTubeException('Failed to extract signature function name');
             }
 
             $this->instructions = $this->parseFunctionCode($this->s_func_name, $js_code);
         }
 
         if (count($this->instructions) === 0) {
-            // Could not parse any signature instructions
-            return null;
+            throw new YouTubeException('Failed to extract signature instructions');
         }
 
         if ($this->instructions['type'] == 'instructions') {
@@ -142,7 +139,7 @@ class SignatureDecoder
                 return array($instructions, 'type' => 'instructions');
 
             } elseif (preg_match_all('/[;{]([\w$]+)\[/', $js_code, $matches)) {
-
+                // the following extracted statements require JS runtime for further processing
                 if ((new JsRuntime())->getApp()) {
 
                     $fn_names = array_unique($matches[1]);
@@ -175,35 +172,21 @@ class SignatureDecoder
     protected function decryptSignature(string $signature, string $func_name, string $func_code): ?string
     {
         $func_name = stripslashes($func_name);
+        $result = $signature;
 
         $jsrt = new JsRuntime();
-        $this->exec_disabled = !function_exists('exec');
 
         if ($jsrt->getApp()) {
-            if (!$this->exec_disabled) {
-                $cache_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . substr(preg_replace('/\W/', '-', $signature), 0, 40);
+            $code_str = "%sconsole.log(%s('%s'));";
+            $code_arg = [$func_code, $func_name, $signature];
 
-                if (file_put_contents("{$cache_path}.dump", $func_code . "console.log({$func_name}('{$signature}'));") === false) {
-                    throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());
-
-                } else {
-                    $sig = exec($jsrt->getApp() . ' ' . $jsrt->getArg() . " {$cache_path}.dump", $output, $result_code);
-                    unlink("{$cache_path}.dump");
-                }
-            }
-            if (empty($sig) || ($sig == $signature)) {
-                if (!empty($result_code)) {
-                    throw new YouTubeException("Exit status {$result_code} '{$jsrt::$ver}'");
-                } elseif ($this->exec_disabled || @exec('echo EXEC') != 'EXEC') {
-                    $this->exec_disabled = true;
-                    throw new YouTubeException('exec() has been disabled for security reasons');
-                } else {
-                    $jsr_exe = basename($jsrt->getApp());
-                    throw new YouTubeException("Failed to decrypt sig (func:'{$func_name}', '{$jsr_exe} {$jsrt::$ver}')");
-                }
+            try {
+                $result = $jsrt->run('s', $code_str, $code_arg, $signature);
+            } catch (YouTubeException $e) {
+                throw new YouTubeException($e->getMessage());
             }
         }
 
-        return $sig ?: null;
+        return $result;
     }
 }
