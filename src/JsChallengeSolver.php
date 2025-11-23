@@ -6,6 +6,13 @@ use YouTube\Exception\YouTubeException;
 
 class JsChallengeSolver
 {
+    protected static $jsrt = null;
+
+    public function __construct()
+    {
+        self::$jsrt = new JsRuntime();
+    }
+
     /**
      * @param array $n_params
      * @param array $signatures
@@ -14,41 +21,40 @@ class JsChallengeSolver
      */
     public function solve(array $n_params, array $signatures, string $js_code): ?array
     {
-        if (!function_exists('exec') || @exec('echo EXEC') != 'EXEC') {
-            throw new YouTubeException('exec() has been disabled for security reasons');
-        }
-
-        if ($core_js = $this->getJsCode()) {
-            $jsc = json_encode([
-                'type' => 'player',
-                'player' => $js_code,
-                'requests' => [
-                    [
-                        'type' => 'n',
-                        'challenges' => $n_params,
+        if (self::$jsrt->getApp()) {
+            if ($core_js = $this->getJsCode()) {
+                $jsc = json_encode([
+                    'type' => 'player',
+                    'player' => $js_code,
+                    'requests' => [
+                        [
+                            'type' => 'n',
+                            'challenges' => $n_params,
+                        ],
+                        [
+                            'type' => 'sig',
+                            'challenges' => $signatures,
+                        ],
                     ],
-                    [
-                        'type' => 'sig',
-                        'challenges' => $signatures,
-                    ],
-                ],
-                'output_preprocessed' => true
-            ]);
-            $func_code = $core_js[0]
-                . "\nObject.assign(globalThis, lib);\n"
-                . $core_js[1]
-                . "\nconsole.log(JSON.stringify(jsc("
-                . str_replace('\/', '/', $jsc)
-                . ')));';
+                    'output_preprocessed' => false,
+                ]);
 
-            if ($result = $this->execute($func_code)) {
-                $result = json_decode($result, true);
-                if (is_array($result)
-                    && !empty($result['responses'])
-                    && $result['responses'][0]['type'] == 'result'
-                    && $result['responses'][1]['type'] == 'result'
-                ) {
-                    return $result['responses'];
+                $str_args = [$core_js[0], $core_js[1], str_replace('\/', '/', $jsc)];
+                $code_str = "%s\nObject.assign(globalThis, lib);\n%s\nconsole.log(JSON.stringify(jsc(%s)));";
+
+                try {
+                    if ($result = self::$jsrt->run('JS challenges', $code_str, $str_args)) {
+                        $result = json_decode($result, true);
+                        if (is_array($result)
+                            && !empty($result['responses'])
+                            && $result['responses'][0]['type'] == 'result'
+                            && $result['responses'][1]['type'] == 'result'
+                        ) {
+                            return $result['responses'];
+                        }
+                    }
+                } catch (YouTubeException $e) {
+                    throw new YouTubeException($e->getMessage());
                 }
             }
         }
@@ -58,82 +64,57 @@ class JsChallengeSolver
 
     protected function getJsCode(): array
     {
-        $lib_file = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt.lib.json';
-        $jsc_file = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt.solver.core.js';
+        $js_code = array();
         $context = array(
             'ssl' => array(
                 'verify_peer' => false,
                 'verify_peer_name' => false,
             ),
         );
-
-        if (file_exists($lib_file) && file_exists($jsc_file)) {
-            $hashes = json_decode(file_get_contents(
-                'https://github.com/kclauhk/yt-solver/raw/refs/heads/main/js/_hashes.json',
-                false,
-                stream_context_create($context),
-            ), true);
-            $lib_json = file_get_contents($lib_file);
-            $core_js = file_get_contents($jsc_file);
-            if (hash('sha3-512', $lib_json) == $hashes['lib.json']
-                && hash('sha3-512', $core_js) == $hashes['yt.solver.core.js']
-            ) {
-                return [
-                    json_decode($lib_json)->data->code,
-                    $core_js,
-                ];
-            }
-        }
-
-        if (!$lib_json = file_get_contents(
-            'https://github.com/kclauhk/yt-solver/raw/refs/heads/main/js/lib.json',
+        $tmp_dir = self::$jsrt->getTempDir();
+        if ($hashes = file_get_contents(
+            'https://github.com/kclauhk/yt-ejs/raw/refs/heads/main/js/_hashes.json',
             false,
             stream_context_create($context))
         ) {
-            throw new YouTubeException('Failed to download file "lib.json"');
-        }
-        if (!$core_js = file_get_contents(
-            'https://github.com/kclauhk/yt-solver/raw/refs/heads/main/js/yt.solver.core.js',
-            false,
-            stream_context_create($context))
-        ) {
-            throw new YouTubeException('Failed to download file "yt.solver.core.js"');
-        }
-
-        file_put_contents($lib_file, $lib_json);
-        file_put_contents($jsc_file, $core_js);
-
-        return [
-            json_decode($lib_json)->data->code,
-            $core_js,
-        ];
-    }
-
-    protected function execute(string $func_code): string
-    {
-        $jsrt = new JsRuntime();
-
-        if ($jsrt->getApp()) {
-            $cache_file = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'yt_' . hash('sha1', uniqid('', true));
-
-            if (file_put_contents("{$cache_file}.dump", $func_code) === false) {
-                throw new YouTubeException('Failed to write file to ' . sys_get_temp_dir());
-
-            } else {
-                $result = exec($jsrt->getApp() . ' ' . $jsrt->getArg() . " {$cache_file}.dump", $output, $result_code);
-                unlink("{$cache_file}.dump");
-            }
-
-            if (!$result) {
-                if (!empty($result_code)) {
-                    throw new YouTubeException("Exit status {$result_code} '{$jsrt::$ver}'");
-                } else {
-                    $jsr_exe = basename($jsrt->getApp());
-                    throw new YouTubeException("Failed to solve JS challenges ('{$jsr_exe} {$jsrt::$ver}')");
+            $hashes = json_decode($hashes, true);
+            if (is_array($hashes)) {
+                $js_files = array_keys($hashes);
+                if ($js_files == array_filter($js_files, function($v) use ($tmp_dir) {
+                    return file_exists("{$tmp_dir}{$v}"); })
+                ) {
+                    if ($hashes == array_filter($hashes, function($v, $k) use (&$js_code, $tmp_dir) {
+                            $c = file_get_contents("{$tmp_dir}{$k}");
+                            if (strpos($k, 'lib') !== false) {
+                                array_unshift($js_code, $c);
+                            } elseif (strpos($k, 'core') !== false) {
+                                $js_code[] = $c;
+                            }
+                            return hash('sha3-512', $c) == $v;
+                        }, ARRAY_FILTER_USE_BOTH)
+                    ) {
+                        return $js_code;
+                    }
                 }
             }
         }
-
-        return $result ?: '';
+        // solver JS files outdated/not yet downloaded
+        foreach (($js_files ?? ['yt.solver.lib.min.js', 'yt.solver.core.min.js']) as $js_file) {
+            if (!$data = file_get_contents(
+                "https://github.com/kclauhk/yt-ejs/raw/refs/heads/main/js/{$js_file}",
+                false,
+                stream_context_create($context))
+            ) {
+                throw new YouTubeException("Failed to download challenge solver \"{$js_file}\" script");
+            } else {
+                file_put_contents("{$tmp_dir}{$js_file}", $data);
+                if (strpos($js_file, 'lib') !== false) {
+                    array_unshift($js_code, $data);
+                } elseif (strpos($js_file, 'core') !== false) {
+                    $js_code[] = $data;
+                }
+            }
+        }
+        return $js_code;
     }
 }

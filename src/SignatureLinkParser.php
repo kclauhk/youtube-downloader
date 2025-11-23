@@ -61,7 +61,7 @@ class SignatureLinkParser
                 if (preg_match('/&n=(.*?)&/', ($url ?? ''), $matches)) {
                     $n_params[] = $matches[1];
                 }
-                continue;
+                continue;   // skip the following if JsChallengeSolver will be used
             }
 
             // don't use JsChallengeSolver (deprecated but kept as fallback)
@@ -82,7 +82,7 @@ class SignatureLinkParser
                             }
                         }
                     } catch (YouTubeException $e) {
-                        $streamUrl->_error[] = "Unable to decrypt nsig: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
+                        $streamUrl->_error[] = "Unable to decrypt n: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
                     }
                 }
 
@@ -93,7 +93,7 @@ class SignatureLinkParser
                     try {
                         $decoded_signature = $s_decoder->decode($signature, $playerJs->getResponseBody());
                     } catch (YouTubeException $e) {
-                        $streamUrl->_error[] = "Unable to decrypt signature: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
+                        $streamUrl->_error[] = "Unable to decrypt s: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
                     }
                     $streamUrl->url = $url . (empty($decoded_signature) ? '' : "&$sp=" . urlencode($decoded_signature));
                 } else {
@@ -114,12 +114,10 @@ class SignatureLinkParser
                 $signatures = array_unique($signatures);
 
                 try {
-                    if ((new JsRuntime())->getApp()) {
-                        $solver = new JsChallengeSolver();
-                        if ($result = $solver->solve($n_params, $signatures, $playerJs->getResponseBody())) {
-                            $decoded_n = $result[0]['data'];
-                            $decoded_s = $result[1]['data'];
-                        }
+                    $solver = new JsChallengeSolver();
+                    if ($result = $solver->solve($n_params, $signatures, $playerJs->getResponseBody())) {
+                        $decoded_n = $result[0]['data'];
+                        $decoded_s = $result[1]['data'];
                     }
                 } catch (YouTubeException $e) {
                     $error = "Unable to solve JS challenges: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
