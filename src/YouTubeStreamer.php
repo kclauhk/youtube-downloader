@@ -9,6 +9,7 @@ class YouTubeStreamer
 
     protected array $headers = array();
     protected bool $headers_sent = false;
+    protected array $options = array();
 
     protected bool $debug = false;
 
@@ -105,11 +106,32 @@ class YouTubeStreamer
         // if response is empty - this never gets called
         curl_setopt($ch, CURLOPT_WRITEFUNCTION, [$this, 'bodyCallback']);
 
+        if (!empty($this->options))
+            curl_setopt_array($ch, $this->options);
+
         $ret = curl_exec($ch);
 
         // TODO: $this->logError($ch);
         $error = ($ret === false) ? sprintf('curl error: %s, num: %s', curl_error($ch), curl_errno($ch)) : null;
 
         curl_close($ch);
+    }
+
+    /**
+     * Format ip:port or null to use direct connection
+     * @param $proxy_server
+     * @param $proxy_type
+     */
+    public function setProxy($proxy_server, $proxy_type = CURLPROXY_HTTP)
+    {
+        $this->options[CURLOPT_PROXY] = $proxy_server;
+        $this->options[CURLOPT_PROXYTYPE] = $proxy_type;
+    }
+
+    public function setCookieFile($cookie_file)
+    {
+        // read & write cookies
+        $this->options[CURLOPT_COOKIEJAR] = $cookie_file;
+        $this->options[CURLOPT_COOKIEFILE] = $cookie_file;
     }
 }
