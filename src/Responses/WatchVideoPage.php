@@ -103,10 +103,8 @@ class WatchVideoPage extends HttpResponse
             $result = VideoInfoMapper::fromInitialPlayerResponse($playerResponse);
 
             if (preg_match('/^[a-zA-Z-]+$/', (string)$lang, $matches)) {
-                $initialData = $this->getInitialData();
-
-                if ($initialData) {
-                    $info = VideoInfoMapper::fromInitialData($initialData);
+                if ($initialData = $this->getInitialData()) {
+                    $info = VideoInfoMapper::fromInitialData($initialData, $result);
                     $result->title = $info->title;
                     $result->description = $info->description;
                     $result->channelTitle = $info->channelTitle;
