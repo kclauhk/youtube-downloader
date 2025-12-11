@@ -6,10 +6,10 @@ use YouTube\Exception\YouTubeException;
 
 class NSigDecoder
 {
-    const REGEX_GLOBAL_VAR = '@(?P<q1>["\'])use\s+strict(?P=q1);\s*(?P<code>var\s+(?P<name>[\w$]+)\s*=\s*(?P<value>(?P<q2>["\']).+(?P=q2)\.split\((?P<q3>["\'])(?:(?!(?P=q3)).)+(?P=q3)\)|\[\s*(?:(?P<q4>["\'])(?:(?!(?P=q4)).|\\.)*(?P=q4)\s*,?\s*)+\]))[;,]@x';
+    protected const REGEX_GLOBAL_VAR = '@(?P<q1>["\'])use\s+strict(?P=q1);\s*(?P<code>var\s+(?P<name>[\w$]+)\s*=\s*(?P<value>(?P<q2>["\']).+(?P=q2)\.split\((?P<q3>["\'])(?:(?!(?P=q3)).)+(?P=q3)\)|\[\s*(?:(?P<q4>["\'])(?:(?!(?P=q4)).|\\.)*(?P=q4)\s*,?\s*)+\]))[;,]@x';
     // REGEX_GLOBAL_VAR                                                                                        here simplified  ^^
-    const REGEX_FUNC_CODE = '@[{;,]\s*((?:function\s+{$func_name}|{$func_name}\s*=\s*function|(?:var|const|let)\s+{$func_name}\s*=\s*function)\s*\([^\)]*\)\s*{.+?};)\s@xs';
-    const REGEX_RETURN_CODE = '@;\s*if\s*\(\s*typeof\s+[a-zA-Z0-9_$]+\s*===?\s*(?:(["\'])undefined\1|[\$\w]+\[\d+\])\s*\)\s*return\s+[\$\w]+;@is';
+    protected const REGEX_FUNC_CODE = '@[{;,]\s*((?:function\s+{$func_name}|{$func_name}\s*=\s*function|(?:var|const|let)\s+{$func_name}\s*=\s*function)\s*\([^\)]*\)\s*{.+?};)\s@xs';
+    public const REGEX_RETURN_CODE = '@;\s*if\s*\(\s*typeof\s+[a-zA-Z0-9_$]+\s*===?\s*(?:(["\'])undefined\1|[\$\w]+\[\d+\])\s*\)\s*return\s+[\$\w]+;@is';
 
     private string $n_func_name = '';
     private string $n_func_code = '';

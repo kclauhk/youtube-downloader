@@ -55,7 +55,6 @@ class Utils
     public static function arrayGet(array $array, string $key, $default = null)
     {
         foreach (explode('.', $key) as $segment) {
-
             if (is_array($array) && array_key_exists($segment, $array)) {
                 $array = $array[$segment];
             } else {
@@ -135,7 +134,6 @@ class Utils
     public static function arrayGetText(array $array, string $key): ?string
     {
         if (array_key_exists($key, $array) && is_array($array[$key])) {
-
             if (array_key_exists('simpleText', $array[$key])) {
                 // simpleText
                 return implode('', (array)$array[$key]['simpleText']);

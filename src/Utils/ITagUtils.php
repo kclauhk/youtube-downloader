@@ -10,7 +10,6 @@ class ITagUtils
 
         // https://github.com/ytdl-org/youtube-dl/blob/master/youtube_dl/extractor/youtube.py#L429
         if (preg_match('/_formats = ({(.*?)})\s*_/s', $data, $matches)) {
-
             $json = $matches[1];
 
             // only "double" quotes are valid in JSON
@@ -33,7 +32,6 @@ class ITagUtils
         $results = [];
 
         foreach ($formats as $itag => $format) {
-
             $temp = [];
 
             if (!empty($format['ext'])) {
