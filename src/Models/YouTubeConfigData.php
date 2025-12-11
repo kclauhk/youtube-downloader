@@ -24,9 +24,9 @@ class YouTubeConfigData extends JsonObject
         return $this->deepGet('INNERTUBE_API_KEY');
     }
 
-    public function getSignatureTimestamp(): ?string
+    public function getSignatureTimestamp(): ?int
     {
-        return $this->deepGet('STS');
+        return (int) $this->deepGet('STS');
     }
 
     public function getContext(): ?array

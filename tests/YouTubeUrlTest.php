@@ -7,7 +7,7 @@ use YouTube\Utils\Utils;
 
 class YouTubeUrlTest extends TestCase
 {
-    const BUNNY_VIDEO_ID = "aqz-KE-bpKQ";
+    public const BUNNY_VIDEO_ID = "aqz-KE-bpKQ";
 
     public function test_id_parsing(): void
     {
@@ -31,7 +31,7 @@ class YouTubeUrlTest extends TestCase
             'https://www.youtube.com/c/YouTubeCreators' => 'YouTubeCreators',
             'https://www.youtube.com/c/youtubecreators/videos' => 'youtubecreators',
             'https://www.youtube.com/feed/explore' => null,
-            '' => null
+            '' => null,
         ];
 
         foreach ($tests as $url => $expected) {

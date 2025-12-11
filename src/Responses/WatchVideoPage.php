@@ -11,17 +11,17 @@ use YouTube\Utils\Utils;
 
 class WatchVideoPage extends HttpResponse
 {
-    const REGEX_YTCFG = '/ytcfg\.set\s*\(\s*({.+})\s*\)\s*;/';
-    const REGEX_INITIAL_PLAYER_RESPONSE = '/ytInitialPlayerResponse\s*=\s*({.+})\s*;/';
-    const REGEX_INITIAL_DATA = '/ytInitialData\s*=\s*({.+})\s*;<\/script>/';
-    const REGEX_MARKERS_MAP = '/markersMap"\s*:\s*\[\s*\{.+?(\{"chapters"\s*:\s*\[\s*\{.+?\}\}\})\}(?:\]\s*,\s*"|,\s*\{)/';
+    protected const REGEX_YTCFG = '/ytcfg\.set\s*\(\s*({.+})\s*\)\s*;/';
+    protected const REGEX_INITIAL_PLAYER_RESPONSE = '/ytInitialPlayerResponse\s*=\s*({.+})\s*;/';
+    protected const REGEX_INITIAL_DATA = '/ytInitialData\s*=\s*({.+})\s*;<\/script>/';
+    protected const REGEX_MARKERS_MAP = '/markersMap"\s*:\s*\[\s*\{.+?(\{"chapters"\s*:\s*\[\s*\{.+?\}\}\})\}(?:\]\s*,\s*"|,\s*\{)/';
 
     public function isTooManyRequests(): bool
     {
         return
-            strpos($this->getResponseBody(), 'We have been receiving a large volume of requests') !== false ||
-            strpos($this->getResponseBody(), 'systems have detected unusual traffic') !== false ||
-            strpos($this->getResponseBody(), '/recaptcha/') !== false;
+            strpos($this->getResponseBody(), 'We have been receiving a large volume of requests') !== false
+            || strpos($this->getResponseBody(), 'systems have detected unusual traffic') !== false
+            || strpos($this->getResponseBody(), '/recaptcha/') !== false;
     }
 
     public function isVideoNotFound(): bool
@@ -57,7 +57,10 @@ class WatchVideoPage extends HttpResponse
         if (preg_match(self::REGEX_INITIAL_PLAYER_RESPONSE, $this->getResponseBody(), $matches)) {
             $data = json_decode($matches[1], true);
         }
-        if (empty($data) && preg_match('/ytInitialPlayerResponse\s*=\s*({.+?})\s*;/', $this->getResponseBody(), $matches)) {
+        if (
+            empty($data)
+            && preg_match('/ytInitialPlayerResponse\s*=\s*({.+?})\s*;/', $this->getResponseBody(), $matches)
+        ) {
             $data = json_decode($matches[1], true);
         }
         if (!empty($data)) {
@@ -99,7 +102,7 @@ class WatchVideoPage extends HttpResponse
         if ($playerResponse) {
             $result = VideoInfoMapper::fromInitialPlayerResponse($playerResponse);
 
-            if (preg_match('/^[a-zA-Z-]+$/', (string)$lang, $matches)) {
+            if (preg_match('/^[a-zA-Z-]+$/', (string) $lang, $matches)) {
                 $initialData = $this->getInitialData();
 
                 if ($initialData) {

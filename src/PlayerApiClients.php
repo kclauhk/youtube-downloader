@@ -9,7 +9,7 @@ class PlayerApiClients
 {
     public static array $clients;
 
-    function __construct()
+    public function __construct()
     {
         // InnerTube Clients
         // list of known clients: https://github.com/zerodytrash/YouTube-Internal-Clients
@@ -41,7 +41,7 @@ class PlayerApiClients
                 ],
                 'client_name' => 28,
             ],
-            'ios' => [
+            'ios' => [       // only HLS formats usable
                 'context' => [
                     'client' => [
                         'clientName' => 'IOS',
@@ -67,13 +67,17 @@ class PlayerApiClients
     public function setClient(string $client_id, array $context, ?string $config_url = null): bool
     {
         $ctx_c = Utils::arrayGet($context, 'context.client') ?? [];
-        $has_name = (bool)Utils::arrayGet($context, 'clientName') || (bool)Utils::arrayGet($ctx_c, 'clientName');
+        $has_name = (bool) Utils::arrayGet($context, 'clientName') || (bool) Utils::arrayGet($ctx_c, 'clientName');
         if ($has_name) {
-            $has_ver = ((bool)Utils::arrayGet($context, 'clientName') && (bool)Utils::arrayGet($context, 'clientVersion'))
-                        || ((bool)Utils::arrayGet($ctx_c, 'clientName') && (bool)Utils::arrayGet($ctx_c, 'clientVersion'));
+            $has_ver = ((bool) Utils::arrayGet($context, 'clientName')
+                            && (bool) Utils::arrayGet($context, 'clientVersion'))
+                        || ((bool) Utils::arrayGet($ctx_c, 'clientName')
+                            && (bool) Utils::arrayGet($ctx_c, 'clientVersion'));
         }
         if (!$has_name || !$has_ver) {
-            throw new YouTubeException('Invalid client context: ' . ($has_name ? '"clientVersion"' : '"clientName"') . ' is missing');
+            throw new YouTubeException(
+                'Invalid client context: ' . ($has_name ? '"clientVersion"' : '"clientName"') . ' is missing'
+            );
             return false;
         }
 

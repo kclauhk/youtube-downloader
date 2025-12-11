@@ -2,7 +2,4 @@
 
 namespace YouTube\Exception;
 
-class YouTubeException extends \Exception
-{
-
-}
+class YouTubeException extends \Exception {}

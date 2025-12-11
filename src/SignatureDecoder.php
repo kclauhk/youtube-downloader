@@ -35,7 +35,7 @@ class SignatureDecoder
         }
 
         // PHP instructions
-        $instructions = (array)$this->parseFunctionCode($func_name, $js_code);
+        $instructions = (array) $this->parseFunctionCode($func_name, $js_code);
 
         if (count($instructions) === 0) {
             // Could not parse any signature instructions
@@ -43,16 +43,13 @@ class SignatureDecoder
         }
 
         foreach ($instructions as $opt) {
-
             $command = $opt[0];
             $value = $opt[1];
 
             if ($command == 'swap') {
-
                 $temp = $signature[0];
                 $signature[0] = $signature[$value % strlen($signature)];
                 $signature[$value] = $temp;
-
             } elseif ($command == 'splice') {
                 $signature = substr($signature, $value);
             } elseif ($command == 'reverse') {
@@ -65,11 +62,29 @@ class SignatureDecoder
 
     protected function parseFunctionName(string $js_code): ?string
     {
-        if (preg_match('@\b(?P<var>[a-zA-Z0-9_$]+)&&\((?P=var)=(?P<sig>[a-zA-Z0-9_$]{2,})\(decodeURIComponent\((?P=var)\)\)@is', $js_code, $matches)) {
+        if (
+            preg_match(
+                '@\b(?P<var>[a-zA-Z0-9_$]+)&&\((?P=var)=(?P<sig>[a-zA-Z0-9_$]{2,})\(decodeURIComponent\((?P=var)\)\)@is',
+                $js_code,
+                $matches
+            )
+        ) {
             return preg_quote($matches['sig']);
-        } else if (preg_match('@(?P<sig>[a-zA-Z0-9_$]+)\s*=\s*function\(\s*(?P<arg>[a-zA-Z0-9_$]+)\s*\)\s*{\s*(?P=arg)\s*=\s*(?P=arg)\.split\(\s*""\s*\)\s*;\s*[^}]+;\s*return\s+(?P=arg)\.join\(\s*""\s*\)@is', $js_code, $matches)) {
+        } elseif (
+            preg_match(
+                '@(?P<sig>[a-zA-Z0-9_$]+)\s*=\s*function\(\s*(?P<arg>[a-zA-Z0-9_$]+)\s*\)\s*{\s*(?P=arg)\s*=\s*(?P=arg)\.split\(\s*""\s*\)\s*;\s*[^}]+;\s*return\s+(?P=arg)\.join\(\s*""\s*\)@is',
+                $js_code,
+                $matches
+            )
+        ) {
             return preg_quote($matches['sig']);
-        } else if (preg_match('@(?:\b|[^a-zA-Z0-9_$])(?P<sig>[a-zA-Z0-9_$]{2,})\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\)(?:;[a-zA-Z0-9_$]{2}\.[a-zA-Z0-9_$]{2}\(a,\d+\))?@is', $js_code, $matches)) {
+        } elseif (
+            preg_match(
+                '@(?:\b|[^a-zA-Z0-9_$])(?P<sig>[a-zA-Z0-9_$]{2,})\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\)(?:;[a-zA-Z0-9_$]{2}\.[a-zA-Z0-9_$]{2}\(a,\d+\))?@is',
+                $js_code,
+                $matches
+            )
+        ) {
             return preg_quote($matches['sig']);
         }
 
@@ -83,13 +98,11 @@ class SignatureDecoder
         // single quote in case function name contains $dollar sign
         // xm=function(a){a=a.split("");wm.zO(a,47);wm.vY(a,1);wm.z9(a,68);wm.zO(a,21);wm.z9(a,34);wm.zO(a,16);wm.z9(a,41);return a.join("")};
         if (preg_match('/' . $func_name . '=function\(\S+\){(.*?)}/', $player_html, $matches)) {
-
             $js_code = $matches[1];
 
             // extract all relevant statements within that block
             // wm.vY(a,1);
             if (preg_match_all('/([a-z0-9$]{2})\.([a-z0-9]{2})\([^,]+,(\d+)\)/i', $js_code, $matches) != false) {
-
                 // wm
                 $obj_list = $matches[1];
 
@@ -97,13 +110,17 @@ class SignatureDecoder
                 $func_list = $matches[2];
 
                 // extract javascript code for each one of those statement functions
-                preg_match_all('/(' . implode('|', $func_list) . '):function(.*?)\}/m', $player_html, $matches2, PREG_SET_ORDER);
+                preg_match_all(
+                    '/(' . implode('|', $func_list) . '):function(.*?)\}/m',
+                    $player_html,
+                    $matches2,
+                    PREG_SET_ORDER
+                );
 
-                $functions = array();
+                $functions = [];
 
                 // translate each function according to its use
                 foreach ($matches2 as $m) {
-
                     if (strpos($m[2], '.splice') !== false) {
                         $functions[$m[1]] = 'splice';
                     } elseif (strpos($m[2], '.length') !== false) {
@@ -114,10 +131,10 @@ class SignatureDecoder
                 }
 
                 // FINAL STEP! convert it all to instructions set
-                $instructions = array();
+                $instructions = [];
 
                 foreach ($matches[2] as $index => $name) {
-                    $instructions[] = array($functions[$name], $matches[3][$index]);
+                    $instructions[] = [$functions[$name], $matches[3][$index]];
                 }
 
                 return $instructions;

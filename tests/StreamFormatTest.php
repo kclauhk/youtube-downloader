@@ -14,9 +14,9 @@ class StreamFormatTest extends TestCase
 
         $utils = SerializationUtils::optionsFromFile($json);
 
-        $this->assertTrue($utils instanceof DownloadOptions);
+        $this->assertInstanceOf(DownloadOptions::class, $utils);
 
-        $this->assertEquals(18, count($utils->getAllFormats()));
+        $this->assertCount(18, $utils->getAllFormats());
 
         $first = $utils->getAllFormats()[0];
         $this->assertEquals("video/mp4", $first->getCleanMimeType());

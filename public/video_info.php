@@ -2,9 +2,9 @@
 
 require('../vendor/autoload.php');
 
-$url = isset($_GET['url']) ? $_GET['url'] : null;
+$url = $_GET['url'] ?? null;
 
-function send_json($data)
+function send_json($data): void
 {
     header('Content-Type: application/json');
     echo json_encode($data, JSON_PRETTY_PRINT);
@@ -13,7 +13,7 @@ function send_json($data)
 
 if (!$url) {
     send_json([
-        'error' => 'No URL provided!'
+        'error' => 'No URL provided!',
     ]);
 }
 
@@ -26,15 +26,13 @@ try {
 
     if ($best) {
         send_json([
-            'links' => [$best->url]
+            'links' => [$best->url],
         ]);
     } else {
         send_json(['error' => 'No links found']);
     }
-
 } catch (\YouTube\Exception\YouTubeException $e) {
-
     send_json([
-        'error' => $e->getMessage()
+        'error' => $e->getMessage(),
     ]);
 }

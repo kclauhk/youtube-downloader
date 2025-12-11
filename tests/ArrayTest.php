@@ -9,13 +9,13 @@ class ArrayTest extends TestCase
 {
     protected array $array = [
         'one' => [
-            'two' => ['three' => 33]
+            'two' => ['three' => 33],
         ],
         'simple' => [1, 2, 3],
         'one_2' => 12,
         1,
         2,
-        3
+        3,
     ];
 
     public function test_array_get(): void
