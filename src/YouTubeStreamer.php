@@ -37,9 +37,7 @@ class YouTubeStreamer
                 $this->headers_sent = true;
                 $this->sendHeader(rtrim($data));
             }
-
         } else {
-
             // only headers we wish to forward back to the client
             $forward = array('content-type', 'content-length', 'accept-ranges', 'content-range', 'last-modified');
 
@@ -69,8 +67,13 @@ class YouTubeStreamer
     {
         $ch = curl_init();
 
-        if (count(array_filter($headers, function($v) { return (strpos(strtolower($v), 'user-agent:') !== False); })) == 0)
+        if (
+            count(array_filter($headers, function ($v) {
+                return (strpos(strtolower($v), 'user-agent:') !== false);
+            })) == 0
+        ) {
             $headers[] = 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
+        }
 
         if (isset($_SERVER['HTTP_RANGE'])) {
             $headers[] = 'Range: ' . $_SERVER['HTTP_RANGE'];

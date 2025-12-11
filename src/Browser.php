@@ -34,7 +34,6 @@ class Browser extends BrowserClient
         $cache_path = sprintf('%s/%s', static::getStorageDirectory(), $this->getCacheKey($url));
 
         if (file_exists($cache_path)) {
-
             // unserialize could fail on empty file
             $str = file_get_contents($cache_path);
             return unserialize($str);
@@ -62,7 +61,6 @@ class Browser extends BrowserClient
 
         // must be missing that special cookie
         if (strpos($current_url, 'consent.youtube.com') !== false) {
-
             $field_names = ['gl', 'm', 'pc', 'continue', 'ca', 'x', 'v', 't', 'hl', 'src', 'uxe'];
 
             $form_data = [];

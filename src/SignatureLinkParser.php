@@ -22,7 +22,6 @@ class SignatureLinkParser
         $return = array();
 
         foreach ($formats_combined as $format) {
-
             // appear as either "cipher" or "signatureCipher"
             $cipher = Utils::arrayGet($format, 'cipher', Utils::arrayGet($format, 'signatureCipher', ''));
 
@@ -44,12 +43,10 @@ class SignatureLinkParser
             $streamUrl = new StreamFormat($format);
 
             if ($playerJs) {
-
                 $decoded_signature = (new SignatureDecoder())->decode($signature, $playerJs->getResponseBody());
                 $decoded_url = $url . '&' . $sp . '=' . $decoded_signature;
 
                 $streamUrl->url = $decoded_url;
-
             } else {
                 $streamUrl->url = $url;
             }

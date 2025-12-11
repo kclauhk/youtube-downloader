@@ -9,7 +9,7 @@ class PlayerApiClients
 {
     public static array $clients;
 
-    function __construct()
+    public function __construct()
     {
         // InnerTube Clients
         // list of known clients: https://github.com/zerodytrash/YouTube-Internal-Clients
@@ -41,7 +41,7 @@ class PlayerApiClients
                 ],
                 'client_name' => 28,
             ],
-            'ios' => [
+            'ios' => [       // only HLS formats usable
                 'context' => [
                     'client' => [
                         'clientName' => 'IOS',
