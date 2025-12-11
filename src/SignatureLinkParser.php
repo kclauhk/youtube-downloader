@@ -11,7 +11,7 @@ use YouTube\Utils\Utils;
 class SignatureLinkParser
 {
     /**
-     * @param PlayerApiResponse  $apiResponse
+     * @param PlayerApiResponse $apiResponse
      * @param VideoPlayerJs|null $playerJs
      * @return StreamFormat[]
      */
@@ -20,15 +20,15 @@ class SignatureLinkParser
         $formats_combined = $apiResponse->getAllFormats();
 
         // final response
-        $return = array();
+        $return = [];
 
         $nDecoder = new NSigDecoder();
         $sDecoder = new SignatureDecoder();
-        $ciphers = array();
-        $nParams = array();
-        $signatures = array();
-        $decoded_n = array();
-        $decoded_s = array();
+        $ciphers = [];
+        $nParams = [];
+        $signatures = [];
+        $decoded_n = [];
+        $decoded_s = [];
 
         if (preg_match($nDecoder::REGEX_RETURN_CODE, $playerJs->getResponseBody())) {
             $useSolver = false;
@@ -142,7 +142,11 @@ class SignatureLinkParser
 
                 if (preg_match('/&n=(.*?)&/', ($streamUrl->url ?? ''), $matches)) {
                     if (array_key_exists($matches[1], $decoded_n)) {
-                        $streamUrl->url = str_replace("&n={$matches[1]}&", "&n={$decoded_n[$matches[1]]}&", $streamUrl->url);
+                        $streamUrl->url = str_replace(
+                            "&n={$matches[1]}&",
+                            "&n={$decoded_n[$matches[1]]}&",
+                            $streamUrl->url
+                        );
                     } elseif ($error) {
                         $streamUrl->_error[] = $error;
                     }

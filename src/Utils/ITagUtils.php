@@ -6,11 +6,12 @@ class ITagUtils
 {
     public static function downloadFormats(): array
     {
-        $data = file_get_contents("https://raw.githubusercontent.com/ytdl-org/youtube-dl/master/youtube_dl/extractor/youtube.py");
+        $data = file_get_contents(
+            'https://raw.githubusercontent.com/ytdl-org/youtube-dl/master/youtube_dl/extractor/youtube.py'
+        );
 
         // https://github.com/ytdl-org/youtube-dl/blob/master/youtube_dl/extractor/youtube.py#L429
         if (preg_match('/_formats = ({(.*?)})\s*_/s', $data, $matches)) {
-
             $json = $matches[1];
 
             // only "double" quotes are valid in JSON
@@ -25,7 +26,7 @@ class ITagUtils
             return json_decode($json, true);
         }
 
-        return array();
+        return [];
     }
 
     public static function transformFormats(array $formats): array
@@ -33,7 +34,6 @@ class ITagUtils
         $results = [];
 
         foreach ($formats as $itag => $format) {
-
             $temp = [];
 
             if (!empty($format['ext'])) {
@@ -68,7 +68,7 @@ class ITagUtils
     }
 
     // itag info does not change frequently, that is why we cache it here as a plain static array
-    private static array $itag_detailed = array(
+    private static array $itag_detailed = [
         5 => 'flv, video, 240p, audio',
         6 => 'flv, video, 270p, audio',
         13 => '3gp, video, audio',
@@ -181,5 +181,5 @@ class ITagUtils
         701 => 'mp4, video, 2160p',     // AV1, 60 FPS, HDR
         702 => 'mp4, video, 4320p',     // AV1, 60 FPS, HDR
         773 => 'm4a, audio',            // IAMF/Eclipsa Audio
-    );
+    ];
 }

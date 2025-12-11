@@ -26,12 +26,13 @@ class JsRuntime
             } else {
                 if (
                     $result = file_get_contents($path, false, stream_context_create([
-                    'http' => [
-                        'method' => 'POST',
-                        'header'  => "Content-Type: text/plain\r\n" .
-                                     'X-Token: ' . static::$hash,
-                        'content' => 'decodeURIComponent("%3Fx%3Dtest")',
-                    ]]))
+                        'http' => [
+                            'method' => 'POST',
+                            'header'  => "Content-Type: text/plain\r\n"
+                                         . 'X-Token: ' . static::$hash,
+                            'content' => 'decodeURIComponent("%3Fx%3Dtest")',
+                        ],
+                    ]))
                 ) {
                     if ($result == '?x=test') {
                         static::$app = $path;
@@ -95,7 +96,7 @@ class JsRuntime
         return static::$app;
     }
 
-    public function setArg(string $arguments)
+    public function setArg(string $arguments): void
     {
         static::$arg = $arguments;
     }
@@ -127,8 +128,8 @@ class JsRuntime
         }
 
         if (static::$ver == '(remote)') {
-            $header = "Content-Type: text/plain\r\n" .
-                      'X-Token: ' . static::$hash;
+            $header = "Content-Type: text/plain\r\n"
+                      . 'X-Token: ' . static::$hash;
             if (extension_loaded('zlib')) {
                 $jsCode = gzencode($jsCode, 9);
                 $header .= "\r\nContent-Encoding: gzip";
@@ -184,7 +185,7 @@ class JsRuntime
         return true;
     }
 
-    public function setTempDir($path)
+    public function setTempDir($path): void
     {
         if (empty(realpath($path)) || !is_dir($path)) {
             trigger_error("{$path}: No such directory", E_USER_WARNING);

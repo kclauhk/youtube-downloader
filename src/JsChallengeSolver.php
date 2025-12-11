@@ -69,13 +69,13 @@ class JsChallengeSolver
 
     protected function getJsCode(): array
     {
-        $jsCode = array();
-        $context = array(
-            'ssl' => array(
+        $jsCode = [];
+        $context = [
+            'ssl' => [
                 'verify_peer' => false,
                 'verify_peer_name' => false,
-            ),
-        );
+            ],
+        ];
         $tmpDir = self::$jsrt->getTempDir();
         if (
             $hashes = file_get_contents(
@@ -108,9 +108,12 @@ class JsChallengeSolver
                 }
             }
         } elseif (
-            ($jsFiles = array_filter(['yt.solver.lib.min.js', 'yt.solver.core.min.js'], function ($v) use ($tmpDir) {
+            ($jsFiles = array_filter(
+                ['yt.solver.lib.min.js', 'yt.solver.core.min.js'],
+                function ($v) use ($tmpDir) {
                     return file_exists("{$tmpDir}{$v}");
-            })) && count($jsFiles) == 2
+                }
+            )) && count($jsFiles) == 2
         ) {
             foreach ($jsFiles as $file) {
                 $c = file_get_contents("{$tmpDir}{$file}");

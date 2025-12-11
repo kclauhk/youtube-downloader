@@ -15,21 +15,23 @@ use YouTube\Utils\Utils;
 
 class YouTubeDownloader
 {
-    const REGEX_SID = array(
+    protected const REGEX_SID = [
         'SAPISID' => '/\.youtube\.com[ \t]+.+SAPISID[ \t]+([^\s]+)/',
         'SAPISID1P' => '/\.youtube\.com[ \t]+.+__Secure-1PAPISID[ \t]+([^\s]+)/',
-        'SAPISID3P' => '/\.youtube\.com[ \t]+.+__Secure-3PAPISID[ \t]+([^\s]+)/'
-    );
+        'SAPISID3P' => '/\.youtube\.com[ \t]+.+__Secure-3PAPISID[ \t]+([^\s]+)/',
+    ];
 
     protected Browser $client;
     protected PlayerApiClients $api_clients;
 
-    function __construct()
+    public function __construct()
     {
         $this->client = new Browser();
         $this->api_clients = new PlayerApiClients();
 
-        $this->client->setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36');
+        $this->client->setUserAgent(
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36'
+        );
     }
 
     // Specify network options to be used in all network requests
@@ -38,7 +40,7 @@ class YouTubeDownloader
         return $this->client;
     }
 
-    // Specify the JavaScript runtime for nsig decryption
+    // Specify the JavaScript runtime for n/sig decryption
     public function getJsrt(): JsRuntime
     {
         return new JsRuntime();
@@ -61,7 +63,7 @@ class YouTubeDownloader
         $response = $this->client->get('http://suggestqueries.google.com/complete/search', [
             'client' => 'firefox',
             'ds' => 'yt',
-            'q' => $query
+            'q' => $query,
         ]);
         $json = json_decode($response->body, true);
 
@@ -82,20 +84,24 @@ class YouTubeDownloader
     {
         $video_id = Utils::extractVideoId($url);
 
-        $lang = preg_match('/^[a-zA-Z-]+$/', (string)$lang, $matches) ? $lang : 'en';
+        $lang = preg_match('/^[a-zA-Z-]+$/', (string) $lang, $matches) ? $lang : 'en';
         $cookies = $this->client->getCookies();
         if (preg_match_all('/(\n\.youtube\.com.*[&\t](hl=[\w-]+))/', $cookies, $matches)) {
-            $cookies = str_replace(end($matches[1]), str_replace(end($matches[2]), "hl=$lang", end($matches[1])), $cookies);
+            $cookies = str_replace(
+                end($matches[1]),
+                str_replace(end($matches[2]), "hl=$lang", end($matches[1])),
+                $cookies
+            );
             $this->client->setCookies($cookies);
         } else {
             $this->client->setCookies($cookies . "\n.youtube.com\tTRUE\t/\tFALSE\t0\tPREF\thl=$lang\n");
         }
 
         $response = $this->client->get('https://www.youtube.com/watch?' . http_build_query([
-                'v' => $video_id,
-                'bpctr' => 9999999999,
-                'has_verified' => 1,
-            ]));
+            'v' => $video_id,
+            'bpctr' => 9999999999,
+            'has_verified' => 1,
+        ]));
 
         return new WatchVideoPage($response);
     }
@@ -105,21 +111,23 @@ class YouTubeDownloader
     {
         $cookies = $this->client->getCookies();
         $timestamp = time();
-        $sid_hash = array();
+        $sid_hash = [];
         foreach (['SAPISID3P', 'SAPISID', 'SAPISID1P', 'SAPISID3P'] as $i => $scheme) {
             if (preg_match(self::REGEX_SID[$scheme], $cookies, $matches)) {
                 $sid = trim($matches[1]);
             }
             if ($i > 0 && !empty($user_session_id) && !empty($sid)) {
-                $sid_hash[] = "{$scheme}HASH {$timestamp}_" . sha1("{$user_session_id} {$timestamp} {$sid} https://www.youtube.com") . '_u';
+                $sid_hash[] = "{$scheme}HASH {$timestamp}_"
+                              . sha1("{$user_session_id} {$timestamp} {$sid} https://www.youtube.com")
+                              . '_u';
             }
         }
 
-        return empty($sid_hash) ? [] : array(
+        return empty($sid_hash) ? [] : [
             'Authorization' => implode(' ', $sid_hash),
             'X-Goog-Authuser' => $session_index,
             'X-Youtube-Bootstrap-Logged-In' => true,
-        );
+        ];
     }
 
     // Downloading player API JSON
@@ -151,22 +159,27 @@ class YouTubeDownloader
         } else {
             $context = $clients[$client_id]['context'];
         }
-        foreach (['hl' => 'en', 'timeZone' => 'UTC', 'utcOffsetMinutes' => 0] as $k => $v){
+        foreach (['hl' => 'en', 'timeZone' => 'UTC', 'utcOffsetMinutes' => 0] as $k => $v) {
             $context['client'][$k] = $v;
         }
 
-        $response = $this->client->post('https://www.youtube.com/youtubei/v1/player?key=' . $configData->getApiKey(), json_encode(array_filter([
+        $response = $this->client->post(
+            'https://www.youtube.com/youtubei/v1/player?key=' . $configData->getApiKey(),
+            json_encode(array_filter([
                 'context' => $context,
                 'videoId' => $video_id,
                 'playbackContext' => [
                     'contentPlaybackContext' => [
                         'html5Preference' => 'HTML5_PREF_WANTS',
-                        'signatureTimestamp' => (int)$sig_timestamp,
-                    ]
+                        'signatureTimestamp' => $sig_timestamp,
+                    ],
                 ],
                 'racyCheckOk' => true,
                 'params' => ($clients[$client_id]['params'] ?? null),
-            ], function($v) { return ($v || is_numeric($v)); })), array_merge(array_filter([
+            ], function ($v) {
+                return ($v || is_numeric($v));
+            })),
+            array_merge(array_filter([
                 'Content-Type' => 'application/json',
                 'Origin' => 'https://www.youtube.com',
                 'X-Origin' => 'https://www.youtube.com',
@@ -174,7 +187,10 @@ class YouTubeDownloader
                 'X-Goog-Visitor-Id' => $visitor_id,
                 'X-Youtube-Client-Name' => ($clients[$client_id]['client_name'] ?? null),
                 'X-Youtube-Client-Version' => $context['client']['clientVersion'],
-            ], function($v) { return ($v || is_numeric($v)); }), $this->setAuthHeaders($session_index, $user_session_id)));
+            ], function ($v) {
+                return ($v || is_numeric($v));
+            }), $this->setAuthHeaders($session_index, $user_session_id))
+        );
 
         return new PlayerApiResponse($response);
     }
@@ -183,7 +199,8 @@ class YouTubeDownloader
      *
      * @param string $video_id
      * @param array/string $extra       array of options, e.g. ['client'=>'tv', 'lang'=>'fr'] or
-     *                                  comma-delimited list of player client IDs (the 1st in the list has the highest preference)
+     *                                  comma-delimited list of player client IDs (the 1st in the
+     *                                  list has the highest preference)
      * @return DownloadOptions
      * @throws TooManyRequestsException
      * @throws VideoNotFoundException
@@ -202,10 +219,14 @@ class YouTubeDownloader
         if ($extra) {
             if (is_array($extra)) {
                 if (array_key_exists('lang', $extra)) {
-                    $lang = (is_string($extra['lang']) && preg_match('/^[a-zA-Z-]+$/', $extra['lang'], $matches)) ? $extra['lang'] : $lang;
+                    $lang = is_string($extra['lang']) && preg_match('/^[a-zA-Z-]+$/', $extra['lang'], $matches)
+                            ? $extra['lang']
+                            : $lang;
                 }
                 if (array_key_exists('client', $extra)) {
-                    $client_ids = is_array($extra['client']) ? $extra['client'] : explode(',', preg_replace('/\s+/', '', $extra['client']));
+                    $client_ids = is_array($extra['client'])
+                                  ? $extra['client']
+                                  : explode(',', preg_replace('/\s+/', '', $extra['client']));
                 }
             } elseif (is_string($extra)) {
                 $client_ids = explode(',', preg_replace('/\s+/', '', $extra)) ?: $client_ids;
@@ -239,10 +260,12 @@ class YouTubeDownloader
             if ($status_reason = $player_response->getPlayabilityStatusReason()) {
                 throw new YouTubeException("Player response: {$status_reason}");
             } elseif (($matches[1] ?? '') != $video_id) {
-                if ($player_error = $player_response->getErrorMessage())
+                if ($player_error = $player_response->getErrorMessage()) {
                     throw new YouTubeException("Player response: {$player_error}");
+                }
                 // throws exception if player response does not belong to the requested video
-                throw new YouTubeException('Invalid player response: got player response for video "' . ($matches[1] ?? '') . '" instead of "' . $video_id .'"');
+                throw new YouTubeException('Invalid player response: got player response for video "'
+                                           . ($matches[1] ?? '') . '" instead of "' . $video_id . '"');
             }
 
             // get player.js location that holds URL signature decipher function
@@ -258,18 +281,24 @@ class YouTubeDownloader
             }
             $links = array_merge($links, $parsed);
 
-            $hls_manifest = $hls_manifest ?? $player_response->getHlsManifestUrl();
+            $hls_manifest ??= $player_response->getHlsManifestUrl();
         }
 
         if (count($client_ids) > 1) {
             // sorting order: combined (smaller itag first) >> video (higher resolution >> smaller itag) >> audio (lower quality first)
-            usort($links, fn($a,$b) => $b->mimeType[0] <=> $a->mimeType[0] ?:
-                                       ($a->mimeType[0]=='v' ? ((bool)$a->audioQuality ? $a->itag : 999) : str_replace(['_','D','H'], ['L','M','S'], substr($a->audioQuality,-4,1)))
-                                           <=> ($b->mimeType[0]=='v' ? ((bool)$b->audioQuality ? $b->itag : 999) : str_replace(['_','D','H'], ['L','M','S'], substr($b->audioQuality,-4,1))) ?:
-                                       $b->height <=> $a->height ?:
-                                       $a->itag <=> $b->itag ?:
-                                       $a->isDrc <=> $b->isDrc ?:
-                                       $b->_pref <=> $a->_pref
+            usort(
+                $links,
+                fn($a, $b) => $b->mimeType[0] <=> $a->mimeType[0]
+                              ?: ($a->mimeType[0] == 'v'
+                                    ? ((bool) $a->audioQuality ? $a->itag : 999)
+                                    : str_replace(['_','D','H'], ['L','M','S'], substr($a->audioQuality, -4, 1)))
+                                 <=> ($b->mimeType[0] == 'v'
+                                    ? ((bool) $b->audioQuality ? $b->itag : 999)
+                                    : str_replace(['_','D','H'], ['L','M','S'], substr($b->audioQuality, -4, 1)))
+                              ?: $b->height <=> $a->height
+                              ?: $a->itag <=> $b->itag
+                              ?: $a->isDrc <=> $b->isDrc
+                              ?: $b->_pref <=> $a->_pref
             );
             // remove duplicated formats
             foreach ($links as $k => $v) {
@@ -307,7 +336,6 @@ class YouTubeDownloader
                 $vss = Utils::arrayGet($item, 'vssId');
                 $temp->isAutomatic = Utils::arrayGet($item, 'kind') === 'asr' || strpos($vss, 'a.') !== false;
                 return $temp;
-
             }, $player_response->getCaptionTracks());
         }
 

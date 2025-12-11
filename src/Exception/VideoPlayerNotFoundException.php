@@ -2,7 +2,4 @@
 
 namespace YouTube\Exception;
 
-class VideoPlayerNotFoundException extends YouTubeException
-{
-
-}
+class VideoPlayerNotFoundException extends YouTubeException {}
