@@ -13,7 +13,7 @@ class YouTubePageTest extends TestCase
         $agents = [
             self::UA_FIREFOX,
             self::UA_EDGE,
-            self::UA_IPHONE
+            self::UA_IPHONE,
         ];
 
         foreach ($agents as $agent) {

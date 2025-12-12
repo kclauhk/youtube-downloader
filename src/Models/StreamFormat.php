@@ -7,14 +7,14 @@ class StreamFormat extends JsonObject
 {
     public ?int $itag = null;
     public ?string $mimeType = null;
-    public ?string $bitrate = null;
+    public ?int $bitrate = null;
     public ?int $width = null;
     public ?int $height = null;
-    public ?string $contentLength = null;
+    public ?int $contentLength = null;
     public ?string $quality = null;
     public ?string $qualityLabel = null;
     public ?string $audioQuality = null;
-    public ?string $audioSampleRate = null;
+    public ?int $audioSampleRate = null;
     public bool $isDrc = false;
     public bool $isSr = false;  // Super resolution
     public ?string $url = null;

@@ -7,9 +7,9 @@ class YouTubeStreamer
     // 4096
     protected int $buffer_size = 256 * 1024;
 
-    protected array $headers = array();
+    protected array $headers = [];
     protected bool $headers_sent = false;
-    protected array $options = array();
+    protected array $options = [];
 
     protected bool $debug = false;
 
@@ -38,11 +38,9 @@ class YouTubeStreamer
                 $this->headers_sent = true;
                 $this->sendHeader(rtrim($data));
             }
-
         } else {
-
             // only headers we wish to forward back to the client
-            $forward = array('content-type', 'content-length', 'accept-ranges', 'content-range', 'last-modified');
+            $forward = ['content-type', 'content-length', 'accept-ranges', 'content-range', 'last-modified'];
 
             $parts = explode(':', $data, 2);
 
@@ -70,8 +68,13 @@ class YouTubeStreamer
     {
         $ch = curl_init();
 
-        if (count(array_filter($headers, function($v) { return (strpos(strtolower($v), 'user-agent:') !== False); })) == 0)
+        if (
+            count(array_filter($headers, function ($v) {
+                return (strpos(strtolower($v), 'user-agent:') !== false);
+            })) == 0
+        ) {
             $headers[] = 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
+        }
 
         if (isset($_SERVER['HTTP_RANGE'])) {
             $headers[] = 'Range: ' . $_SERVER['HTTP_RANGE'];
@@ -106,8 +109,9 @@ class YouTubeStreamer
         // if response is empty - this never gets called
         curl_setopt($ch, CURLOPT_WRITEFUNCTION, [$this, 'bodyCallback']);
 
-        if (!empty($this->options))
+        if (!empty($this->options)) {
             curl_setopt_array($ch, $this->options);
+        }
 
         $ret = curl_exec($ch);
 
@@ -122,13 +126,13 @@ class YouTubeStreamer
      * @param $proxy_server
      * @param $proxy_type
      */
-    public function setProxy($proxy_server, $proxy_type = CURLPROXY_HTTP)
+    public function setProxy($proxy_server, $proxy_type = CURLPROXY_HTTP): void
     {
         $this->options[CURLOPT_PROXY] = $proxy_server;
         $this->options[CURLOPT_PROXYTYPE] = $proxy_type;
     }
 
-    public function setCookieFile($cookie_file)
+    public function setCookieFile($cookie_file): void
     {
         // read & write cookies
         $this->options[CURLOPT_COOKIEJAR] = $cookie_file;

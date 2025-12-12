@@ -45,7 +45,8 @@ class JsChallengeSolver
                 try {
                     if ($result = self::$jsrt->run('JS challenges', $codeStr, $codeArg)) {
                         $result = json_decode($result, true);
-                        if (is_array($result)
+                        if (
+                            is_array($result)
                             && !empty($result['responses'])
                             && $result['responses'][0]['type'] == 'result'
                             && $result['responses'][1]['type'] == 'result'
@@ -64,26 +65,31 @@ class JsChallengeSolver
 
     protected function getJsCode(): array
     {
-        $jsCode = array();
-        $context = array(
-            'ssl' => array(
+        $jsCode = [];
+        $context = [
+            'ssl' => [
                 'verify_peer' => false,
                 'verify_peer_name' => false,
-            ),
-        );
+            ],
+        ];
         $tmpDir = self::$jsrt->getTempDir();
-        if ($hashes = file_get_contents(
-            'https://github.com/kclauhk/yt-ejs/raw/refs/heads/main/js/_hashes.json',
-            false, stream_context_create($context))
+        if (
+            $hashes = file_get_contents(
+                'https://github.com/kclauhk/yt-ejs/raw/refs/heads/main/js/_hashes.json',
+                false,
+                stream_context_create($context)
+            )
         ) {
             $hashes = json_decode($hashes, true);
             if (is_array($hashes)) {
                 $jsFiles = array_keys($hashes);
-                if ($jsFiles == array_filter($jsFiles, function($v) use ($tmpDir) {
+                if (
+                    $jsFiles == array_filter($jsFiles, function ($v) use ($tmpDir) {
                         return file_exists("{$tmpDir}{$v}");
                     })
                 ) {
-                    if ($hashes == array_filter($hashes, function($v, $k) use (&$jsCode, $tmpDir) {
+                    if (
+                        $hashes == array_filter($hashes, function ($v, $k) use (&$jsCode, $tmpDir) {
                             $c = file_get_contents("{$tmpDir}{$k}");
                             if (strpos($k, 'lib') !== false) {
                                 array_unshift($jsCode, $c);
@@ -98,9 +104,12 @@ class JsChallengeSolver
                 }
             }
         } elseif (
-            ($jsFiles = array_filter(['yt.solver.lib.min.js', 'yt.solver.core.min.js'], function ($v) use ($tmpDir) {
+            ($jsFiles = array_filter(
+                ['yt.solver.lib.min.js', 'yt.solver.core.min.js'],
+                function ($v) use ($tmpDir) {
                     return file_exists("{$tmpDir}{$v}");
-            })) && count($jsFiles) == 2
+                }
+            )) && count($jsFiles) == 2
         ) {
             foreach ($jsFiles as $file) {
                 $c = file_get_contents("{$tmpDir}{$file}");
@@ -114,9 +123,12 @@ class JsChallengeSolver
         }
         // solver JS files outdated/not yet downloaded
         foreach (($jsFiles ?? ['yt.solver.lib.min.js', 'yt.solver.core.min.js']) as $file) {
-            if (!$data = file_get_contents(
-                "https://github.com/kclauhk/yt-ejs/raw/refs/heads/main/js/{$file}",
-                false, stream_context_create($context))
+            if (
+                !$data = file_get_contents(
+                    "https://github.com/kclauhk/yt-ejs/raw/refs/heads/main/js/{$file}",
+                    false,
+                    stream_context_create($context)
+                )
             ) {
                 throw new YouTubeException("Failed to download challenge solver \"{$file}\" script");
             } else {

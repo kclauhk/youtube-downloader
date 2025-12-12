@@ -6,10 +6,9 @@ use YouTube\Exception\YouTubeException;
 
 class NSigDecoder
 {
-    const REGEX_GLOBAL_VAR = '@(?P<q1>["\'])use\s+strict(?P=q1);\s*(?P<code>var\s+(?P<name>[\w$]+)\s*=\s*(?P<value>(?P<q2>["\']).+(?P=q2)\.split\((?P<q3>["\'])(?:(?!(?P=q3)).)+(?P=q3)\)|\[\s*(?:(?P<q4>["\'])(?:(?!(?P=q4)).|\\.)*(?P=q4)\s*,?\s*)+\]))[;,]@x';
-    // REGEX_GLOBAL_VAR                                                                                        here simplified  ^^
-    const REGEX_FUNC_CODE = '@[{;,]\s*((?:function\s+{$func_name}|{$func_name}\s*=\s*function|(?:var|const|let)\s+{$func_name}\s*=\s*function)\s*\([^\)]*\)\s*{.+?};)\s@xs';
-    const REGEX_RETURN_CODE = '@;\s*if\s*\(\s*typeof\s+[a-zA-Z0-9_$]+\s*===?\s*(?:(["\'])undefined\1|[\$\w]+\[\d+\])\s*\)\s*return\s+[\$\w]+;@is';
+    protected const REGEX_GLOBAL_VAR = '@(?P<q1>["\'])use\s+strict(?P=q1);\s*(?P<code>var\s+(?P<name>[\w$]+)\s*=\s*(?P<value>(?P<q2>["\']).+(?P=q2)\.split\((?P<q3>["\'])(?:(?!(?P=q3)).)+(?P=q3)\)|\[\s*(?:(?P<q4>["\'])(?:(?!(?P=q4)).|\\.)*(?P=q4)\s*,?\s*)+\]))[;,]@x';
+    protected const REGEX_FUNC_CODE = '@[{;,]\s*((?:function\s+{$func_name}|{$func_name}\s*=\s*function|(?:var|const|let)\s+{$func_name}\s*=\s*function)\s*\([^\)]*\)\s*{.+?};)\s@xs';
+    public const REGEX_RETURN_CODE = '@;\s*if\s*\(\s*typeof\s+[a-zA-Z0-9_$]+\s*===?\s*(?:(["\'])undefined\1|[\$\w]+\[\d+\])\s*\)\s*return\s+[\$\w]+;@is';
 
     private string $n_func_name = '';
     private string $n_func_code = '';
@@ -53,17 +52,41 @@ class NSigDecoder
     {
         $var_name = '';
 
-        if (preg_match('@[;\n](?:(?P<f>function\s+)|(?:var\s+)?)(?P<funcname>[a-zA-Z0-9_$]+)\s*(?(f)|=\s*function\s*)\((?P<argname>[a-zA-Z0-9_$]+)\)\s*\{(?:(?!\}[;\n]).)+\}\s*catch\(\s*[a-zA-Z0-9_$]+\s*\)\s*\{\s*return\s+[\w\$]+\[\d+]\s*\+\s*(?P=argname)\s*\}\s*return\s+[^}]+\}[;\n]@xs', $js_code, $matches)) {
+        if (
+            preg_match(
+                '@[;\n](?:(?P<f>function\s+)|(?:var\s+)?)(?P<funcname>[a-zA-Z0-9_$]+)\s*(?(f)|=\s*function\s*)\((?P<argname>[a-zA-Z0-9_$]+)\)\s*\{(?:(?!\}[;\n]).)+\}\s*catch\(\s*[a-zA-Z0-9_$]+\s*\)\s*\{\s*return\s+[\w\$]+\[\d+]\s*\+\s*(?P=argname)\s*\}\s*return\s+[^}]+\}[;\n]@xs',
+                $js_code,
+                $matches
+            )
+        ) {
             return preg_quote($matches['funcname']);
-        } elseif (preg_match('@(?:\.get\("n"\)\)&&\(b=|(?:b=String\.fromCharCode\(110\)|(?P<str_idx>[a-zA-Z0-9_$.]+)&&\(b="nn"\[\+(?P=str_idx)\])(?:,[a-zA-Z0-9_$]+\(a\))?,c=a\.(?:get\(b\)|[a-zA-Z0-9_$]+\[b\]\|\|null)\)&&\(c=|\b(?P<var>[a-zA-Z0-9_$]+)=)(?P<nfunc>[a-zA-Z0-9_$]+)(?:\[(?P<idx>\d+)\])?\([a-zA-Z]\)(?(var),[a-zA-Z0-9_$]+\.set\((?:"n+"|[a-zA-Z0-9_$]+)\,(?P=var)\))@x', $js_code, $matches)) {
+        } elseif (
+            preg_match(
+                '@(?:\.get\("n"\)\)&&\(b=|(?:b=String\.fromCharCode\(110\)|(?P<str_idx>[a-zA-Z0-9_$.]+)&&\(b="nn"\[\+(?P=str_idx)\])(?:,[a-zA-Z0-9_$]+\(a\))?,c=a\.(?:get\(b\)|[a-zA-Z0-9_$]+\[b\]\|\|null)\)&&\(c=|\b(?P<var>[a-zA-Z0-9_$]+)=)(?P<nfunc>[a-zA-Z0-9_$]+)(?:\[(?P<idx>\d+)\])?\([a-zA-Z]\)(?(var),[a-zA-Z0-9_$]+\.set\((?:"n+"|[a-zA-Z0-9_$]+)\,(?P=var)\))@x',
+                $js_code,
+                $matches
+            )
+        ) {
             $var_name = preg_quote($matches['nfunc']);
-        } elseif (preg_match('@;\s*(?P<name>[a-zA-Z0-9_$]+)\s*=\s*function\([a-zA-Z0-9_$]+\)\s*\{(?:(?!};).)+?return\s*(?P<q>["\'])[\w-]+_w8_(?P=q)\s*\+\s*[a-zA-Z0-9_$]+@xs', $js_code, $matches)) {
+        } elseif (
+            preg_match(
+                '@;\s*(?P<name>[a-zA-Z0-9_$]+)\s*=\s*function\([a-zA-Z0-9_$]+\)\s*\{(?:(?!};).)+?return\s*(?P<q>["\'])[\w-]+_w8_(?P=q)\s*\+\s*[a-zA-Z0-9_$]+@xs',
+                $js_code,
+                $matches
+            )
+        ) {
             $var_name = preg_quote($matches['name']);
-        } elseif (preg_match('@var\s+[\w$]{3}\s*=\s*\[([\w$]{3})\]\s*[,;]@', $js_code, $matches)) {
+        } elseif (
+            preg_match(
+                '@var\s+[\w$]{3}\s*=\s*\[([\w$]{3})\]\s*[,;]@',
+                $js_code,
+                $matches
+            )
+        ) {
             return preg_quote($matches[1]);
         }
 
-        if (preg_match('@var\s+' . $var_name .  '\s*=\s*\[(.+?)\]\s*[,;]@', $js_code, $matches)) {
+        if (preg_match('@var\s+' . $var_name . '\s*=\s*\[(.+?)\]\s*[,;]@', $js_code, $matches)) {
             return preg_quote($matches[1]);
         }
 
@@ -91,7 +114,13 @@ class NSigDecoder
             $ret = $matches[0];
             $pos = strpos($js_code, $ret);
 
-            if (preg_match_all('@[,;]\s*([\w$]{3})\s*=\s*function\(\w\)\s*{@', substr($js_code, $pos - 10000, 10000), $matches)) {
+            if (
+                preg_match_all(
+                    '@[,;]\s*([\w$]{3})\s*=\s*function\(\w\)\s*{@',
+                    substr($js_code, $pos - 10000, 10000),
+                    $matches
+                )
+            ) {
                 $func_name = end($matches[1]);
 
                 if (preg_match(str_replace('{$func_name}', $func_name, self::REGEX_FUNC_CODE), $js_code, $matches)) {

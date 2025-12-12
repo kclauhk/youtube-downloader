@@ -26,7 +26,7 @@ class PlayerApiResponse extends HttpResponse
         // video only or audio only streams
         $adaptiveFormats = $this->query('streamingData.adaptiveFormats');
 
-        return array_merge((array)$formats, (array)$adaptiveFormats);
+        return array_merge((array) $formats, (array) $adaptiveFormats);
     }
 
     public function getHlsManifestUrl(): ?string
@@ -36,7 +36,7 @@ class PlayerApiResponse extends HttpResponse
 
     public function getCaptionTracks(): array
     {
-        return (array)$this->query('captions.playerCaptionsTracklistRenderer.captionTracks');
+        return (array) $this->query('captions.playerCaptionsTracklistRenderer.captionTracks');
     }
 
     public function getPlayabilityStatusReason(): ?string
