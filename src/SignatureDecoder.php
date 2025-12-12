@@ -23,7 +23,7 @@ and translate it to PHP
 class SignatureDecoder
 {
     private string $s_func_name = '';
-    private array  $instructions = [];
+    private array $instructions = [];
 
     /**
      * @param string $signature
@@ -48,23 +48,19 @@ class SignatureDecoder
 
         if ($this->instructions['type'] == 'instructions') {
             foreach ($this->instructions[0] as $opt) {
-
                 $command = $opt[0];
                 $value = $opt[1];
 
                 if ($command == 'swap') {
-
                     $temp = $signature[0];
                     $signature[0] = $signature[$value % strlen($signature)];
                     $signature[$value] = $temp;
-
                 } elseif ($command == 'splice') {
                     $signature = substr($signature, $value);
                 } elseif ($command == 'reverse') {
                     $signature = strrev($signature);
                 }
             }
-
         } elseif ($this->instructions['type'] == 'js') {
             $func_code = implode(";\n", $this->instructions[0]) . ";\n";
 
@@ -105,7 +101,6 @@ class SignatureDecoder
             // extract all relevant statements within that block
             // wm.vY(a,1);
             if (preg_match_all('/([a-z0-9$]{2})\.([a-z0-9]{2})\([^,]+,(\d+)\)/i', $js_code, $matches) != false) {
-
                 // wm
                 $obj_list = $matches[1];
 
@@ -119,7 +114,6 @@ class SignatureDecoder
 
                 // translate each function according to its use
                 foreach ($matches2 as $m) {
-
                     if (strpos($m[2], '.splice') !== false) {
                         $functions[$m[1]] = 'splice';
                     } elseif (strpos($m[2], '.length') !== false) {
@@ -137,11 +131,9 @@ class SignatureDecoder
                 }
 
                 return array($instructions, 'type' => 'instructions');
-
             } elseif (preg_match_all('/[;{]([\w$]+)\[/', $js_code, $matches)) {
                 // the following extracted statements require JS runtime for further processing
                 if ((new JsRuntime())->getApp()) {
-
                     $fn_names = array_unique($matches[1]);
 
                     $instructions = array();
@@ -161,7 +153,6 @@ class SignatureDecoder
                     $instructions[] = $js_func;
 
                     return array($instructions, 'type' => 'js');
-
                 }
             }
         }

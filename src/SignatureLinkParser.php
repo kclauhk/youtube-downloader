@@ -36,7 +36,7 @@ class SignatureLinkParser
             $useSolver = true;
         }
 
-        foreach ($formats_combined as $k=>$format) {
+        foreach ($formats_combined as $k => $format) {
             if (isset($format['url'])) {
                 // appear as "url"
                 $url = $format['url'];
@@ -124,7 +124,7 @@ class SignatureLinkParser
                 }
             }
 
-            foreach ($formats_combined as $k=>$format) {
+            foreach ($formats_combined as $k => $format) {
                 $streamUrl = new StreamFormat($format);
 
                 if (array_key_exists($k, $ciphers)) {

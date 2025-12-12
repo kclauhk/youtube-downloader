@@ -17,8 +17,9 @@ class JsRuntime
         if ($this->isExecAvailable() && realpath($path)) {
             if (is_dir($path)) {
                 static::$dir = $path;
-                if ($this->getApp())
+                if ($this->getApp()) {
                     return true;
+                }
             } elseif (is_executable($path)) {
                 static::$ver = exec($path . ' -v');
                 static::$app = $path;
@@ -57,8 +58,9 @@ class JsRuntime
             throw new YouTubeException('Deno not found');
         }
 
-        if (substr(static::$ver, 0, 4) == 'deno')
+        if (substr(static::$ver, 0, 4) == 'deno') {
             static::$arg = '--ext=js --no-code-cache --no-prompt --no-remote --no-lock --node-modules-dir=none --no-config';
+        }
 
         return static::$app;
     }
@@ -83,8 +85,9 @@ class JsRuntime
      */
     public function run(string $type, string $codeStr, array $spValue = [], string $value = null): ?string
     {
-        if (empty(static::$app))
+        if (empty(static::$app)) {
             throw new YouTubeException('JS runtime not available');
+        }
 
         $result = null;
         try {
@@ -96,7 +99,6 @@ class JsRuntime
         $tmpFile = $this->getTempDir() . 'yt_' . hash('sha1', uniqid('', true)) . '.dump';
         if (file_put_contents($tmpFile, $jsCode) === false) {
             throw new YouTubeException('Failed to create files in ' . $this->getTempDir());
-
         } else {
             $result = exec(static::$app . ' ' . static::$arg . " {$tmpFile}", $output, $resultCode);
             unlink($tmpFile);
@@ -110,7 +112,8 @@ class JsRuntime
                 throw new YouTubeException(
                     "Failed to solve {$type} ("
                     . (!empty($spValue) ? "func:'" . substr($spValue[1], 0, 20) . "' " : '')
-                    . "'{$jsrExe} " . static::$ver . "')");
+                    . "'{$jsrExe} " . static::$ver . "')"
+                );
             }
         }
 
@@ -119,8 +122,9 @@ class JsRuntime
 
     protected function isExecAvailable(): bool
     {
-        if (!function_exists('exec') || @exec('echo EXEC') != 'EXEC')
+        if (!function_exists('exec') || @exec('echo EXEC') != 'EXEC') {
             throw new YouTubeException('exec() is not available therefore JS runtimes cannot be used');
+        }
 
         return true;
     }
@@ -131,8 +135,9 @@ class JsRuntime
             trigger_error("{$path}: No such directory", E_USER_WARNING);
         } elseif (!is_writable(realpath($path))) {
             trigger_error("{$path}: Permission denied", E_USER_WARNING);
-        } else
+        } else {
             static::$tmp = realpath($path);
+        }
     }
 
     public function getTempDir(): string
