@@ -129,9 +129,10 @@ class Utils
     /**
      * @param array $array
      * @param string $key
+     * @param string|null $default
      * @return string|null
      */
-    public static function arrayGetText(array $array, string $key): ?string
+    public static function arrayGetText(array $array, string $key, ?string $default = null): ?string
     {
         if (array_key_exists($key, $array) && is_array($array[$key])) {
             if (array_key_exists('simpleText', $array[$key])) {
@@ -149,6 +150,6 @@ class Utils
             }
         }
 
-        return null;
+        return $default;
     }
 }
