@@ -8,14 +8,15 @@ use YouTube\Utils\Utils;
 
 class Browser extends BrowserClient
 {
-    public function setUserAgent(string $agent): void
+    public function setUserAgent($user_agent): void
     {
-        $this->headers['User-Agent'] = $agent;
-    }
-
-    public function getUserAgent(): ?string
-    {
-        return Utils::arrayGet($this->headers, 'User-Agent');
+        if (is_string($user_agent) && $user_agent !== '') {
+            if (is_callable('parent::setUserAgent')) {
+                parent::setUserAgent($user_agent);
+            } else {
+                $this->headers['User-Agent'] = $user_agent;
+            }
+        }
     }
 
     public function followRedirects(bool $enabled): self
