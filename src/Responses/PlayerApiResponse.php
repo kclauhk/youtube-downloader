@@ -29,9 +29,13 @@ class PlayerApiResponse extends HttpResponse
         return array_merge((array) $formats, (array) $adaptiveFormats);
     }
 
-    public function getHlsManifestUrl(): ?string
+    public function getStreamingUrls(): array
     {
-        return $this->query('streamingData.hlsManifestUrl');
+        return [
+            'dash' => $this->query('streamingData.dashManifestUrl'),
+            'hls' => $this->query('streamingData.hlsManifestUrl'),
+            'sabr' => $this->query('streamingData.serverAbrStreamingUrl'),
+        ];
     }
 
     public function getCaptionTracks(): array

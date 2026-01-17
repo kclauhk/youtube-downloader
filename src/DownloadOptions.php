@@ -19,14 +19,18 @@ class DownloadOptions
     private ?array $captions;
 
     /** @var string|null */
+    private ?string $dashManifestUrl;
     private ?string $hlsManifestUrl;
+    private ?string $serverAbrStreamingUrl;
 
-    public function __construct(array $formats, ?string $hlsManifestUrl, VideoInfo $info, ?array $captions)
+    public function __construct(array $formats, array $streaming_urls, VideoInfo $info, ?array $captions)
     {
         $this->formats = $formats;
         $this->info = $info;
         $this->captions = $captions;
-        $this->hlsManifestUrl = $hlsManifestUrl;
+        $this->dashManifestUrl = $streaming_urls[0];
+        $this->hlsManifestUrl = $streaming_urls[1];
+        $this->serverAbrStreamingUrl = $streaming_urls[2];
     }
 
     /**
@@ -93,8 +97,24 @@ class DownloadOptions
     /**
      * @return string|null
      */
+    public function getDashManifestUrl(): ?string
+    {
+        return $this->dashManifestUrl;
+    }
+
+    /**
+     * @return string|null
+     */
     public function getHlsManifestUrl(): ?string
     {
         return $this->hlsManifestUrl;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getServerAbrUrl(): ?string
+    {
+        return $this->serverAbrStreamingUrl;
     }
 }
