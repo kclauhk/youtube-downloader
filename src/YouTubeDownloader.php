@@ -30,7 +30,7 @@ class YouTubeDownloader
         $this->api_clients = new PlayerApiClients();
 
         $this->client->setUserAgent(
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36'
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.7390.54 Safari/537.36'
         );
     }
 
@@ -206,12 +206,12 @@ class YouTubeDownloader
      * @throws VideoNotFoundException
      * @throws YouTubeException
      */
-    public function getDownloadLinks(string $video_id, $extra = null): DownloadOptions
+    public function getDownloadLinks(string $video, $extra = null): DownloadOptions
     {
-        $video_id = Utils::extractVideoId($video_id);
+        $video_id = Utils::extractVideoId($video);
 
         if (!$video_id) {
-            throw new \InvalidArgumentException('Invalid video ID: ' . $video_id);
+            throw new \InvalidArgumentException('Invalid video ID: ' . $video);
         }
 
         $lang = null;
@@ -275,13 +275,15 @@ class YouTubeDownloader
 
             $parsed = SignatureLinkParser::parseLinks($player_response, $player);
             if (count($client_ids) > 1) {
-                foreach ($parsed as $k => $v) {
-                    $parsed[$k]->_pref = -$i;
+                foreach ($parsed['adaptive'] as $k => $v) {
+                    $parsed['adaptive'][$k]->_pref = -$i;
                 }
             }
-            $links = array_merge($links, $parsed);
+            $links = array_merge($links, $parsed['adaptive']);
 
-            $hls_manifest ??= $player_response->getHlsManifestUrl();
+            $dash_url ??= $parsed['dash'];
+            $hls_url ??= $parsed['hls'];
+            $sabr_url ??= $parsed['sabr'];
         }
 
         if (count($client_ids) > 1) {
@@ -316,7 +318,7 @@ class YouTubeDownloader
         $info = $page->getVideoInfo($lang);
         $captions = $this->getCaptions($player_response);
 
-        return new DownloadOptions($links, $hls_manifest, $info, $captions);
+        return new DownloadOptions($links, [$dash_url, $hls_url, $sabr_url], $info, $captions);
     }
 
     /**

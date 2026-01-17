@@ -55,9 +55,14 @@ composer require kclauhk/youtube-downloader "~4.1.2"
   ```
 (The old way to specify the player client(s) remains valid)
 
-### HLS manifest (available in "ios"/"web" and live streams)
-To get the URL of the HLS manifest  
-`$manifestUrl = $downloadOptions->getHlsManifestUrl();`  
+### DASH/HLS manifest (available in "ios"/"web" and live streams)
+To get the URL of the DASH/HLS manifest  
+```php
+$manifestUrl = $downloadOptions->getHlsManifestUrl();
+
+$manifestUrl = $downloadOptions->getDashManifestUrl();
+```
+(For private/age-restricted videos, fetching the manifest (.m3u8) and MPEG-TS segments requires the same set of cookies)
 
 ### n/sig decoding is supported
 [Deno](https://deno.com/) (an open-source JavaScript runtime) and the PHP **exec()** function are required. To use this project with Deno, you can either:

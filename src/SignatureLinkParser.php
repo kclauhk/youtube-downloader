@@ -17,18 +17,13 @@ class SignatureLinkParser
      */
     public static function parseLinks(PlayerApiResponse $apiResponse, ?VideoPlayerJs $playerJs = null): array
     {
-        $formats_combined = $apiResponse->getAllFormats();
-
-        // final response
-        $return = [];
-
         $nDecoder = new NSigDecoder();
         $sDecoder = new SignatureDecoder();
-        $ciphers = [];
         $nParams = [];
         $signatures = [];
         $decoded_n = [];
         $decoded_s = [];
+        $ciphers = [];
 
         if (preg_match($nDecoder::REGEX_RETURN_CODE, $playerJs->getResponseBody())) {
             $useSolver = false;
@@ -36,6 +31,15 @@ class SignatureLinkParser
             $useSolver = true;
         }
 
+        $streaming_urls = $apiResponse->getStreamingUrls();
+        foreach (array_filter($streaming_urls) as $u) {
+            if (preg_match('/([&\/])n[=\/]([^&\/]+)\1/', $u, $matches)) {
+                $nParams[] = $matches[2];
+            }
+        }
+
+        $adaptive = [];
+        $formats_combined = $apiResponse->getAllFormats();
         foreach ($formats_combined as $k => $format) {
             if (isset($format['url'])) {
                 // appear as "url"
@@ -103,7 +107,7 @@ class SignatureLinkParser
                 $streamUrl->url = $url;
             }
 
-            $return[] = self::detectSR($streamUrl);
+            $adaptive[] = self::detectSR($streamUrl);
         }
 
         if ($useSolver) {
@@ -152,11 +156,26 @@ class SignatureLinkParser
                     }
                 }
 
-                $return[] = self::detectSR($streamUrl);
+                $adaptive[] = self::detectSR($streamUrl);
+            }
+
+            foreach (array_filter($streaming_urls) as $k => $u) {
+                if (preg_match('/([&\/])n[=\/]([^&\/]+)\1/', $u, $matches)) {
+                    if (array_key_exists($matches[2], $decoded_n)) {
+                        $streaming_urls[$k] = str_replace(
+                            $matches[0],
+                            ($matches[1] == '&' ? "&n={$decoded_n[$matches[2]]}&" : "/n/{$decoded_n[$matches[2]]}/"),
+                            $u
+                        );
+                    }
+                }
             }
         }
 
-        return $return;
+        return array_merge(
+            ['adaptive' => $adaptive],
+            $streaming_urls
+        );
     }
 
     // check whether $format is "super resolution" (AI-upscaled)
