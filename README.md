@@ -72,10 +72,10 @@ $manifestUrl = $downloadOptions->getDashManifestUrl();
 
 You may use other JS runtimes. [Here](https://github.com/kclauhk/youtube-downloader/blob/main/JSRUNTIME.md#javascript-runtime) are some examples.
 
-Hence, "TVHTML5", which requires n decoding, is added. (client ID: `tv`)  
+Hence, "TVHTML5", which requires n decoding, is added (client ID: `tv`) and is set as default client if a JS runtime is available.  
 
 ### player client can be added/modified
-The currently available clients are `android`, `android_vr`, `ios`, `tv`, `web` (Safari user agent) and `web_embedded`. By default, `android` is used.
+The currently available clients are `android`, `android_vr`, `ios`, `tv`, `web` (Safari user agent) and `web_embedded`.
 You can add additional clients/modify the built-in clients by:  
   `$youtube->getApiClients()->setClient($clientId, $context);`
 - `$clientId` - ID of the player client
