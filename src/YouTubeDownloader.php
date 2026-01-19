@@ -159,31 +159,46 @@ class YouTubeDownloader
 
         $response = $this->client->post(
             'https://www.youtube.com/youtubei/v1/player?key=' . $configData->getApiKey(),
-            json_encode(array_filter([
-                'context' => $context,
-                'videoId' => $video_id,
-                'playbackContext' => [
-                    'contentPlaybackContext' => [
-                        'html5Preference' => 'HTML5_PREF_WANTS',
-                        'signatureTimestamp' => $sig_timestamp,
+            json_encode(
+                array_filter(
+                    [
+                        'context' => $context,
+                        'videoId' => $video_id,
+                        'playbackContext' => [
+                            'contentPlaybackContext' => [
+                                'html5Preference' => 'HTML5_PREF_WANTS',
+                                'signatureTimestamp' => $sig_timestamp,
+                            ],
+                        ],
+                        'racyCheckOk' => true,
+                        'params' => ($clients[$client_id]['params'] ?? null),
                     ],
-                ],
-                'racyCheckOk' => true,
-                'params' => ($clients[$client_id]['params'] ?? null),
-            ], function ($v) {
-                return ($v || is_numeric($v));
-            })),
-            array_merge(array_filter([
-                'Content-Type' => 'application/json',
-                'Origin' => 'https://www.youtube.com',
-                'X-Origin' => 'https://www.youtube.com',
-                'X-Goog-PageId' => $page_id,
-                'X-Goog-Visitor-Id' => $visitor_id,
-                'X-Youtube-Client-Name' => ($clients[$client_id]['client_name'] ?? null),
-                'X-Youtube-Client-Version' => $context['client']['clientVersion'],
-            ], function ($v) {
-                return ($v || is_numeric($v));
-            }), $this->setAuthHeaders($session_index, $user_session_id))
+                    function ($v) {
+                        return ($v || is_numeric($v));
+                    }
+                )
+            ),
+            array_merge(
+                array_filter(
+                    [
+                        'Content-Type' => 'application/json',
+                        'Origin' => 'https://www.youtube.com',
+                        'X-Origin' => 'https://www.youtube.com',
+                        'X-Goog-PageId' => $page_id,
+                        'X-Goog-Visitor-Id' => $visitor_id,
+                        'X-Youtube-Client-Name' => ($clients[$client_id]['client_name'] ?? null),
+                        'X-Youtube-Client-Version' => $context['client']['clientVersion'],
+                    ],
+                    function ($v) {
+                        return ($v || is_numeric($v));
+                    }
+                ),
+                (
+                    ($clients[$client_id]['supports_cookies'] ?? true)
+                        ? $this->setAuthHeaders($session_index, $user_session_id)
+                        : []
+                )
+            )
         );
 
         return new PlayerApiResponse($response);
