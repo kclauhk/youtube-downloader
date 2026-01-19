@@ -215,7 +215,6 @@ class YouTubeDownloader
         }
 
         $lang = null;
-        $client_ids = ['android'];
         if ($extra) {
             if (is_array($extra)) {
                 if (array_key_exists('lang', $extra)) {
@@ -230,6 +229,22 @@ class YouTubeDownloader
                 }
             } elseif (is_string($extra)) {
                 $client_ids = explode(',', preg_replace('/\s+/', '', $extra)) ?: $client_ids;
+            }
+        }
+        if (empty($client_ids)) {
+            if (
+                (function () {
+                    try {
+                        return (new JsRuntime())->getApp();
+                    } catch (YouTubeException $e) {
+                        return false;
+                    }
+                })()
+                || preg_match(self::REGEX_SID['SAPISID'], $this->client->getCookies(), $matches)
+            ) {
+                $client_ids = ['tv'];
+            } else {
+                $client_ids = ['android'];
             }
         }
 
