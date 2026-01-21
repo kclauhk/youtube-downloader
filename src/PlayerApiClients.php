@@ -25,6 +25,7 @@ class PlayerApiClients
                     ],
                 ],
                 'client_name' => 3,
+                'supports_cookies' => false,
             ],
             'android_vr' => [
                 'context' => [
@@ -40,6 +41,7 @@ class PlayerApiClients
                     ],
                 ],
                 'client_name' => 28,
+                'supports_cookies' => false,
             ],
             'ios' => [       // only HLS formats usable
                 'context' => [
@@ -54,6 +56,7 @@ class PlayerApiClients
                     ],
                 ],
                 'client_name' => 5,
+                'supports_cookies' => false,
             ],
             'tv' => [       // "tv" client requires nsig
                 'context' => [
@@ -65,6 +68,7 @@ class PlayerApiClients
                 ],
                 'client_name' => 7,
                 'config_url' => 'https://www.youtube.com/tv',
+                'supports_cookies' => true,
             ],
             'web' => [       // "web" client with Safari UA provides muxed HLS formats
                 'context' => [
@@ -75,6 +79,7 @@ class PlayerApiClients
                     ],
                 ],
                 'client_name' => 1,
+                'supports_cookies' => true,
             ],
             'web_embedded' => [
                 'context' => [
@@ -87,6 +92,7 @@ class PlayerApiClients
                     ],
                 ],
                 'client_name' => 56,
+                'supports_cookies' => true,
             ],
         ];
     }
