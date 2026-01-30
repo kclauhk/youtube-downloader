@@ -224,7 +224,7 @@ class YouTubeDownloader
         }
 
         $lang = null;
-        $client_ids = ['android'];
+        $client_ids = ['android_vr'];
         if ($extra) {
             if (is_array($extra)) {
                 if (array_key_exists('lang', $extra)) {
