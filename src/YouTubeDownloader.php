@@ -259,7 +259,7 @@ class YouTubeDownloader
             ) {
                 $client_ids = ['tv'];
             } else {
-                $client_ids = ['android'];
+                $client_ids = ['android_vr'];
             }
         }
 
