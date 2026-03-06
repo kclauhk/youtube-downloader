@@ -64,7 +64,7 @@ $manifestUrl = $downloadOptions->getDashManifestUrl();
 ```
 (For private/age-restricted videos, fetching the manifest (.m3u8) and MPEG-TS segments requires the same set of cookies)
 
-### n/sig decoding is supported
+### n/sig deciphering is supported
 [Deno](https://deno.com/) (an open-source JavaScript runtime) and the PHP **exec()** function are required. To use this project with Deno, you can either:
 - put the Deno binary executable into the "vendor/kclauhk/youtube-downloader/src" directory; or
 - specify the directory containing the binary executable by  
@@ -72,10 +72,10 @@ $manifestUrl = $downloadOptions->getDashManifestUrl();
 
 You may use other JS runtimes. [Here](https://github.com/kclauhk/youtube-downloader/blob/main/JSRUNTIME.md#javascript-runtime) are some examples.
 
-Hence, "TVHTML5", which requires n decoding, is added (client ID: `tv`) and is set as default client if a JS runtime is available.  
+Hence, "TVHTML5", which requires n deciphering, is added (client ID: `tv`) and is set as default client if a JS runtime is available.  
 
 ### player client can be added/modified
-The currently available clients are `android`, `android_vr`, `ios`, `tv`, `web` (Safari user agent) and `web_embedded`.
+The currently available clients are `android_vr`, `ios`, `tv`, `web` (Safari user agent) and `web_embedded`.
 You can add additional clients/modify the built-in clients by:  
   `$youtube->getApiClients()->setClient($clientId, $context);`
 - `$clientId` - ID of the player client

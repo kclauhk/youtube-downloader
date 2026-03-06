@@ -23,6 +23,8 @@ class YouTubeDownloader
 
     protected Browser $client;
     protected PlayerApiClients $api_clients;
+    protected ?int $player_sts = null;
+    protected ?array $player_ver = null;
 
     public function __construct()
     {
@@ -40,16 +42,27 @@ class YouTubeDownloader
         return $this->client;
     }
 
-    // Specify the JavaScript runtime for n/sig decryption
+    // Specify the JavaScript runtime for n/sig deciphering
     public function getJsrt(): JsRuntime
     {
         return new JsRuntime();
     }
 
-    // Specify client for video data request
+    // Client info to be used in API call
     public function getApiClients(): PlayerApiClients
     {
         return $this->api_clients;
+    }
+
+    // Specify the player JavaScript version
+    public function setPlayerJsVersion(string $ver): bool
+    {
+        if (preg_match('/([0-9]{5,})@([0-9a-f]{8,})(\/.+?\.js)?$/', $ver, $matches)) {
+            $this->player_sts = (int) $matches[1];
+            $this->player_ver = array_slice($matches, 2);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -140,7 +153,7 @@ class YouTubeDownloader
         }
 
         $visitor_id = $configData->getGoogleVisitorId();
-        $sig_timestamp = $configData->getSignatureTimestamp();
+        $sig_timestamp = $this->player_sts ?? $configData->getSignatureTimestamp();
         $page_id = $configData->getDelegatedSessionId();
         $session_index = $configData->getSessionIndex();
         $user_session_id = $configData->getUserSessionId();
@@ -298,8 +311,16 @@ class YouTubeDownloader
                                            . ($matches[1] ?? '') . '" instead of "' . $video_id . '"');
             }
 
-            // get player.js location that holds URL signature decipher function
+            // get player js location that holds URL signature decipher function
             $player_url = $page->getPlayerScriptUrl();
+            if (is_array($this->player_ver)) {
+                $player_ver = implode('', $this->player_ver);
+                if (count($this->player_ver) > 1) {
+                    $player_url = "https://www.youtube.com/s/player/{$player_ver}";
+                } else {
+                    $player_url = preg_replace('/\/player\/[0-9a-f]+\//', "/player/{$player_ver}/", $player_url);
+                }
+            }
             $response = $this->client->get($player_url);
             $player = new VideoPlayerJs($response);
 
