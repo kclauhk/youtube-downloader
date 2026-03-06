@@ -15,7 +15,7 @@ class SignatureLinkParser
      * @param VideoPlayerJs|null $playerJs
      * @return StreamFormat[]
      */
-    public static function parseLinks(PlayerApiResponse $apiResponse, ?VideoPlayerJs $playerJs = null): array
+    public static function parseLinks(PlayerApiResponse $apiResponse, VideoPlayerJs $playerJs): array
     {
         $nDecoder = new NSigDecoder();
         $sDecoder = new SignatureDecoder();
