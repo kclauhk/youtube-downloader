@@ -18,8 +18,8 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'ANDROID',
-                        'clientVersion' => '20.42.40',
-                        'userAgent' => 'com.google.android.youtube/20.42.40 (Linux; U; Android 14) gzip',
+                        'clientVersion' => '21.02.35',
+                        'userAgent' => 'com.google.android.youtube/21.02.35 (Linux; U; Android 14) gzip',
                         'osName' => 'Android',
                         'osVersion' => '14',
                     ],
@@ -47,10 +47,10 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'IOS',
-                        'clientVersion' => '20.10.4',
+                        'clientVersion' => '21.02.3',
                         'deviceMake' => 'Apple',
                         'deviceModel' => 'iPhone16,2',
-                        'userAgent' => 'com.google.ios.youtube/20.10.4 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)',
+                        'userAgent' => 'com.google.ios.youtube/21.02.3 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)',
                         'osName' => 'iPhone',
                         'osVersion' => '18.3.2.22D82',
                     ],
@@ -62,7 +62,7 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'TVHTML5',
-                        'clientVersion' => '7.20250923.13.00',
+                        'clientVersion' => '7.20260114.12.00',
                         'userAgent' => 'Mozilla/5.0 (ChromiumStylePlatform) Cobalt/Version',
                     ],
                 ],
@@ -74,7 +74,7 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'WEB',
-                        'clientVersion' => '2.20250925.01.00',
+                        'clientVersion' => '2.20260114.08.00',
                         'userAgent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15',
                     ],
                 ],
@@ -85,13 +85,14 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'WEB_EMBEDDED_PLAYER',
-                        'clientVersion' => '1.20250923.21.00',
+                        'clientVersion' => '1.20260115.01.00',
                     ],
                     'thirdParty' => [
-                        'embedUrl' => 'https://www.youtube.com/',
+                        'embedUrl' => 'https://www.reddit.com/',
                     ],
                 ],
                 'client_name' => 56,
+                'config_url' => 'https://www.youtube.com/embed/{$video_id}?html5=1',
                 'supports_cookies' => true,
             ],
         ];

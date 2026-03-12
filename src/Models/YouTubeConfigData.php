@@ -48,4 +48,9 @@ class YouTubeConfigData extends JsonObject
     {
         return $this->deepGet('USER_SESSION_ID');
     }
+
+    public function getEncryptedHostFlags(): ?string
+    {
+        return $this->deepGet('WEB_PLAYER_CONTEXT_CONFIGS.WEB_PLAYER_CONTEXT_CONFIG_ID_EMBEDDED_PLAYER.encryptedHostFlags');
+    }
 }
