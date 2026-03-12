@@ -158,42 +158,57 @@ class YouTubeDownloader
         $session_index = $configData->getSessionIndex();
         $user_session_id = $configData->getUserSessionId();
 
-        if (!empty($clients[$client_id]['context']['client']['userAgent'])) {
-            $this->client->setUserAgent($clients[$client_id]['context']['client']['userAgent']);
+        $context = $clients[$client_id]['context'];
+        if (!empty($context['client']['userAgent'])) {
+            $this->client->setUserAgent($context['client']['userAgent']);
         }
-
-        if (isset($clients[$client_id]['config_url'])) {
-            $response = $this->client->get($clients[$client_id]['config_url']);
-            $config = new WatchVideoPage($response);
+        $headers = [];
+        if (!empty($context['thirdParty']['embedUrl'])) {
+            $headers['Referer'] = $context['thirdParty']['embedUrl'];
+        }
+        if (!empty($clients[$client_id]['config_url'])) {
+            $config_url = str_replace('{$video_id}', $video_id, $clients[$client_id]['config_url']);
+            $config = new WatchVideoPage($this->client->get($config_url, [], $headers));
             if (!empty($config->getYouTubeConfigData())) {
                 $configData = $config->getYouTubeConfigData();
             }
             $context = $configData->getContext();
-        } else {
-            $context = $clients[$client_id]['context'];
+            $context = Utils::array_merge_recursive($context, $clients[$client_id]['context']);
         }
         foreach (['hl' => 'en', 'timeZone' => 'UTC', 'utcOffsetMinutes' => 0] as $k => $v) {
             $context['client'][$k] = $v;
         }
 
+        if (strpos(print_r($configData, true), '&embeds_enable_encrypted_host_flags_enforcement=true') !== false) {
+            $encrypted_context = $configData->getEncryptedHostFlags();
+        } else {
+            $encrypted_context = null;
+        }
+
         $response = $this->client->post(
-            'https://www.youtube.com/youtubei/v1/player?key=' . $configData->getApiKey(),
+            'https://www.youtube.com/youtubei/v1/player?prettyPrint=false',
             json_encode(
                 array_filter(
                     [
-                        'context' => $context,
                         'videoId' => $video_id,
+                        'context' => $context,
                         'playbackContext' => [
-                            'contentPlaybackContext' => [
-                                'html5Preference' => 'HTML5_PREF_WANTS',
-                                'signatureTimestamp' => $sig_timestamp,
-                            ],
+                            'contentPlaybackContext' => array_filter(
+                                [
+                                    'html5Preference' => 'HTML5_PREF_WANTS',
+                                    'signatureTimestamp' => $sig_timestamp,
+                                    'encryptedHostFlags' => $encrypted_context,
+                                ],
+                                function ($v) {
+                                    return !is_null($v);
+                                }
+                            ),
                         ],
                         'racyCheckOk' => true,
                         'params' => ($clients[$client_id]['params'] ?? null),
                     ],
                     function ($v) {
-                        return ($v || is_numeric($v));
+                        return !is_null($v);
                     }
                 )
             ),
@@ -202,6 +217,7 @@ class YouTubeDownloader
                     [
                         'Content-Type' => 'application/json',
                         'Origin' => 'https://www.youtube.com',
+                        'Referer' => $config_url ?? null,
                         'X-Origin' => 'https://www.youtube.com',
                         'X-Goog-PageId' => $page_id,
                         'X-Goog-Visitor-Id' => $visitor_id,
@@ -209,7 +225,7 @@ class YouTubeDownloader
                         'X-Youtube-Client-Version' => $context['client']['clientVersion'],
                     ],
                     function ($v) {
-                        return ($v || is_numeric($v));
+                        return !is_null($v);
                     }
                 ),
                 (
@@ -338,7 +354,9 @@ class YouTubeDownloader
         }
 
         if (count($client_ids) > 1) {
-            // sorting order: combined (smaller itag first) >> video (higher resolution >> smaller itag) >> audio (lower quality first)
+            // sorting order:   combined (smaller itag first)
+            //                  >> video (higher resolution >> smaller itag)
+            //                  >> audio (lower quality first)
             usort(
                 $links,
                 fn($a, $b) => $b->mimeType[0] <=> $a->mimeType[0]
