@@ -173,7 +173,7 @@ class YouTubeDownloader
                 $configData = $config->getYouTubeConfigData();
             }
             $context = $configData->getContext();
-            $context = Utils::array_merge_recursive($context, $clients[$client_id]['context']);
+            $context = Utils::arrayMergeRecursive($context, $clients[$client_id]['context']);
         }
         foreach (['hl' => 'en', 'timeZone' => 'UTC', 'utcOffsetMinutes' => 0] as $k => $v) {
             $context['client'][$k] = $v;

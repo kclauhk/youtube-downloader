@@ -74,7 +74,7 @@ class JsChallengeSolver
         ];
         $tmpDir = self::$jsrt->getTempDir();
         if (
-            $hashes = file_get_contents(
+            $hashes = @file_get_contents(
                 'https://github.com/kclauhk/yt-ejs/raw/refs/heads/main/js/_hashes.json',
                 false,
                 stream_context_create($context)
@@ -124,7 +124,7 @@ class JsChallengeSolver
         // solver JS files outdated/not yet downloaded
         foreach (($jsFiles ?? ['yt.solver.lib.min.js', 'yt.solver.core.min.js']) as $file) {
             if (
-                !$data = file_get_contents(
+                !$data = @file_get_contents(
                     "https://github.com/kclauhk/yt-ejs/raw/refs/heads/main/js/{$file}",
                     false,
                     stream_context_create($context)
