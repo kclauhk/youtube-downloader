@@ -15,7 +15,7 @@ class WatchVideoPage extends HttpResponse
     protected const REGEX_INITIAL_PLAYER_RESPONSE = '/ytInitialPlayerResponse\s*=\s*(\{.+\})\s*;\S/';
     protected const REGEX_INITIAL_DATA = '/ytInitialData\s*=\s*(\{.+?\})\s*;<\/script>/';
     protected const REGEX_MARKERS_MAP = '/markersMap"\s*:\s*\[\s*\{.+?(\{"chapters"\s*:\s*\[\s*\{.+?\}\}\})\}(?:\]\s*,\s*"|,\s*\{)/';
-    protected ?InitialPlayerResponse $playerResponse = null;
+    protected ?InitialPlayerResponse $initialPlayerResponse = null;
 
     public function isTooManyRequests(): bool
     {
@@ -55,8 +55,8 @@ class WatchVideoPage extends HttpResponse
     // returns very similar response to what you get when you query /youtubei/v1/player
     public function getPlayerResponse(): ?InitialPlayerResponse
     {
-        if ($this->playerResponse) {
-            return $this->playerResponse;
+        if ($this->initialPlayerResponse) {
+            return $this->initialPlayerResponse;
         }
 
         if (preg_match(self::REGEX_INITIAL_PLAYER_RESPONSE, $this->getResponseBody(), $matches)) {
@@ -69,8 +69,8 @@ class WatchVideoPage extends HttpResponse
             $data = json_decode($matches[1], true);
         }
         if (!empty($data)) {
-            $this->playerResponse = new InitialPlayerResponse($data);
-            return $this->playerResponse;
+            $this->initialPlayerResponse = new InitialPlayerResponse($data);
+            return $this->initialPlayerResponse;
         }
 
         return null;
@@ -108,8 +108,30 @@ class WatchVideoPage extends HttpResponse
         if ($playerResponse) {
             $result = VideoInfoMapper::fromInitialPlayerResponse($playerResponse);
 
-            if (preg_match('/^[a-zA-Z-]+$/', (string) $lang, $matches)) {
-                if ($initialData = $this->getInitialData()) {
+            if ($initialData = $this->getInitialData()) {
+                if ($engagementPanels = Utils::arrayGet($initialData, 'engagementPanels')) {
+                    $key = [
+                        'commentCount' => 'engagementPanelSectionListRenderer.header.engagementPanelTitleHeaderRenderer.contextualInfo',
+                        'howThisWasMade' => 'engagementPanelSectionListRenderer.content.structuredDescriptionContentRenderer.items',
+                    ];
+                    foreach ($engagementPanels as $panel) {
+                        if (
+                            $result->commentCount === null
+                            && ($text = Utils::arrayGet($panel, $key['commentCount']))
+                        ) {
+                            $result->commentCount = (int) Utils::arrayGetText(['text' => $text], 'text');
+                        } elseif ($items = Utils::arrayGet($panel, $key['howThisWasMade'])) {
+                            foreach ($items as $item) {
+                                if ($content = Utils::arrayGet($item, 'howThisWasMadeSectionViewModel.bodyHeader.content')) {
+                                    $result->howThisWasMade = $content;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (preg_match('/^[a-zA-Z-]+$/', (string) $lang, $matches)) {
                     $info = VideoInfoMapper::fromInitialData($initialData, $result);
                     $result->title = $info->title;
                     $result->description = $info->description;
