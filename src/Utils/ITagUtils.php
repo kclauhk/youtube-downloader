@@ -181,5 +181,8 @@ class ITagUtils
         701 => 'mp4, video, 2160p',     // AV1, 60 FPS, HDR
         702 => 'mp4, video, 4320p',     // AV1, 60 FPS, HDR
         773 => 'm4a, audio',            // IAMF/Eclipsa Audio
+        779 => 'webm, video, 480p',     // 1080x608
+        780 => 'webm, video, 480p',     // 1080x608
+        788 => 'mp4, video, 480p',      // AV1, 1080x608
     ];
 }

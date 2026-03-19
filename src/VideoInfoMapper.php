@@ -31,7 +31,9 @@ class VideoInfoMapper
         $result->category = Utils::arrayGet($microformat, 'playerMicroformatRenderer.category');
 
         $result->durationSeconds = Utils::arrayGet($videoDetails, 'lengthSeconds');
+
         $result->viewCount = Utils::arrayGet($videoDetails, 'viewCount');
+        $result->likeCount = Utils::arrayGet($microformat, 'playerMicroformatRenderer.likeCount');
 
         $result->keywords = Utils::arrayGet($videoDetails, 'keywords', []);
         $result->regionsAllowed = Utils::arrayGet($microformat, 'playerMicroformatRenderer.availableCountries', []);

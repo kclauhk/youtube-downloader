@@ -18,8 +18,8 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'ANDROID',
-                        'clientVersion' => '20.42.40',
-                        'userAgent' => 'com.google.android.youtube/20.42.40 (Linux; U; Android 14) gzip',
+                        'clientVersion' => '21.02.35',
+                        'userAgent' => 'com.google.android.youtube/21.02.35 (Linux; U; Android 14) gzip',
                         'osName' => 'Android',
                         'osVersion' => '14',
                     ],
@@ -47,10 +47,10 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'IOS',
-                        'clientVersion' => '20.10.4',
+                        'clientVersion' => '21.02.3',
                         'deviceMake' => 'Apple',
                         'deviceModel' => 'iPhone16,2',
-                        'userAgent' => 'com.google.ios.youtube/20.10.4 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)',
+                        'userAgent' => 'com.google.ios.youtube/21.02.3 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)',
                         'osName' => 'iPhone',
                         'osVersion' => '18.3.2.22D82',
                     ],
