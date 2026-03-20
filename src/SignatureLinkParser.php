@@ -12,11 +12,15 @@ class SignatureLinkParser
 {
     /**
      * @param PlayerApiResponse $apiResponse
-     * @param VideoPlayerJs|null $playerJs
-     * @return StreamFormat[]
+     * @param VideoPlayerJs $playerJs
+     * @return array
      */
-    public static function parseLinks(PlayerApiResponse $apiResponse, VideoPlayerJs $playerJs): array
+    public static function parseLinks(PlayerApiResponse $apiResponse, VideoPlayerJs &$playerJs): array
     {
+        $playerJsCode = $playerJs->getResponseBody();
+        $playerUrl = $playerJs->getResponse()->info->url;
+
+        $error403 = 'This URL may yield HTTP 403 Forbidden error.';
         $nDecoder = new NSigDecoder();
         $sDecoder = new SignatureDecoder();
         $nParams = [];
@@ -25,14 +29,8 @@ class SignatureLinkParser
         $decoded_s = [];
         $ciphers = [];
 
-        if (preg_match($nDecoder::REGEX_RETURN_CODE, $playerJs->getResponseBody())) {
-            $useSolver = false;
-        } else {
-            $useSolver = true;
-        }
-
-        $streaming_urls = $apiResponse->getStreamingUrls();
-        foreach (array_filter($streaming_urls) as $u) {
+        $streamingUrls = $apiResponse->getStreamingUrls();
+        foreach (array_filter($streamingUrls) as $u) {
             if (preg_match('/([&\/])n[=\/]([^&\/]+)\1/', $u, $matches)) {
                 $nParams[] = $matches[2];
             }
@@ -50,54 +48,65 @@ class SignatureLinkParser
 
                 $cipherArray = Utils::parseQueryString($cipher);
 
-                // contains ?ip noting which IP can access it, and ?expire containing link expiration timestamp
                 $url = Utils::arrayGet($cipherArray, 'url');
-                $sp = Utils::arrayGet($cipherArray, 'sp'); // used to be 'sig'
+                $sp = Utils::arrayGet($cipherArray, 'sp');  // used to be 'sig'
 
-                // needs to be decrypted!
+                // needs to be deciphered
                 if ($signature = Utils::arrayGet($cipherArray, 's')) {
                     $signatures[] = $signature;
                     $ciphers[$k] = [$signature, $sp, $url];
                 }
             }
+            if (preg_match('/&n=(.*?)&/', ($url ?? ''), $matches)) {
+                $nParams[] = $matches[1];
+            }
 
-            if ($useSolver) {
-                if (preg_match('/&n=(.*?)&/', ($url ?? ''), $matches)) {
-                    $nParams[] = $matches[1];
+            // download player js if needed
+            if (($nParams || $signatures) && !isset($useSolver)) {
+                if ($playerJs->getResponse()->info->http_code === null) {
+                    try {
+                        $playerJsCode = self::getPlayerScript($playerJs);
+                    } catch (YouTubeException $e) {
+                        $error = "{$e->getMessage()} {$error403}";
+                    }
                 }
+                $useSolver = ($playerJsCode) && !preg_match(NSigDecoder::REGEX_RETURN_CODE, $playerJsCode);
+            }
+
+            if (!empty($useSolver)) {
                 continue;   // skip the following if JsChallengeSolver will be used
             }
 
             // don't use JsChallengeSolver (deprecated but kept as fallback)
             $streamUrl = new StreamFormat($format);
 
-            if ($playerJs) {
+            if ($playerJsCode) {
                 if (preg_match('/&n=(.*?)&/', ($url ?? ''), $matches)) {
-                    // decrypt n
+                    // decipher n
                     try {
                         if ((new JsRuntime())->getApp()) {
                             $nParam = $matches[1];
 
                             if (!array_key_exists($nParam, $decoded_n)) {
-                                $decoded_n[$nParam] = $nDecoder->decode($nParam, $playerJs->getResponseBody());
+                                $decoded_n[$nParam] = $nDecoder->decode($nParam, $playerJsCode);
                             }
                             if ($decoded_n[$nParam] != $nParam) {
                                 $url = str_replace('&n=' . $nParam . '&', '&n=' . $decoded_n[$nParam] . '&', $url);
                             }
                         }
                     } catch (YouTubeException $e) {
-                        $streamUrl->_error[] = "Unable to decrypt n: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
+                        $streamUrl->_error[] = "Unable to decipher n: {$e->getMessage()}. {$error403} (player: {$playerUrl})";
                     }
                 }
 
                 if (isset($format['url'])) {
-                    // some videos do not need signature decryption
+                    // some videos do not need to be deciphered
                     $streamUrl->url = $url;
                 } elseif ($signature) {
                     try {
-                        $decoded_signature = $sDecoder->decode($signature, $playerJs->getResponseBody());
+                        $decoded_signature = $sDecoder->decode($signature, $playerJsCode);
                     } catch (YouTubeException $e) {
-                        $streamUrl->_error[] = "Unable to decrypt s: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
+                        $streamUrl->_error[] = "Unable to decipher s: {$e->getMessage()}. {$error403} (player: {$playerUrl})";
                     }
                     $streamUrl->url = $url . (empty($decoded_signature) ? '' : "&$sp=" . urlencode($decoded_signature));
                 } else {
@@ -107,24 +116,26 @@ class SignatureLinkParser
                 $streamUrl->url = $url;
             }
 
+            if (!empty($error)) {
+                $streamUrl->_error[] = $error;
+            }
+
             $adaptive[] = self::detectSR($streamUrl);
         }
 
-        if ($useSolver) {
-            $error = null;
-
-            if (($nParams || $signatures) && $playerJs) {
+        if (!empty($useSolver)) {
+            if (($nParams || $signatures) && $playerJsCode) {
                 $nParams = array_unique($nParams);
                 $signatures = array_unique($signatures);
 
                 try {
                     $solver = new JsChallengeSolver();
-                    if ($result = $solver->solve($nParams, $signatures, $playerJs->getResponseBody())) {
+                    if ($result = $solver->solve($nParams, $signatures, $playerJsCode)) {
                         $decoded_n = $result[0]['data'];
                         $decoded_s = $result[1]['data'];
                     }
                 } catch (YouTubeException $e) {
-                    $error = "Unable to solve JS challenges: {$e->getMessage()}. This URL may yield HTTP 403 Forbidden error. (player: {$playerJs->getResponse()->info->url})";
+                    $error = "Unable to solve JS challenges: {$e->getMessage()}. {$error403} (player: {$playerUrl})";
                 }
             }
 
@@ -136,7 +147,7 @@ class SignatureLinkParser
                         $streamUrl->url = "{$ciphers[$k][2]}&{$ciphers[$k][1]}=" . urlencode($decoded_s[$ciphers[$k][0]]);
                     } else {
                         $streamUrl->url = $ciphers[$k][2];
-                        if ($error) {
+                        if (!empty($error)) {
                             $streamUrl->_error[] = $error;
                         }
                     }
@@ -151,7 +162,7 @@ class SignatureLinkParser
                             "&n={$decoded_n[$matches[1]]}&",
                             $streamUrl->url
                         );
-                    } elseif ($error) {
+                    } elseif (!empty($error)) {
                         $streamUrl->_error[] = $error;
                     }
                 }
@@ -159,10 +170,10 @@ class SignatureLinkParser
                 $adaptive[] = self::detectSR($streamUrl);
             }
 
-            foreach (array_filter($streaming_urls) as $k => $u) {
+            foreach (array_filter($streamingUrls) as $k => $u) {
                 if (preg_match('/([&\/])n[=\/]([^&\/]+)\1/', $u, $matches)) {
                     if (array_key_exists($matches[2], $decoded_n)) {
-                        $streaming_urls[$k] = str_replace(
+                        $streamingUrls[$k] = str_replace(
                             $matches[0],
                             ($matches[1] == '&' ? "&n={$decoded_n[$matches[2]]}&" : "/n/{$decoded_n[$matches[2]]}/"),
                             $u
@@ -174,7 +185,7 @@ class SignatureLinkParser
 
         return array_merge(
             ['adaptive' => $adaptive],
-            $streaming_urls
+            $streamingUrls
         );
     }
 
@@ -186,5 +197,20 @@ class SignatureLinkParser
         }
 
         return $format;
+    }
+
+    protected static function getPlayerScript(VideoPlayerJs &$playerJs): string
+    {
+        if ($playerUrl = $playerJs->getResponse()->info->url) {
+            $response = (new Browser())->get($playerUrl);
+            $playerJs = new VideoPlayerJs($response);
+            if ($playerJs->isStatusOkay()) {
+                return $playerJs->getResponseBody();
+            } else {
+                throw new YouTubeException("Unable to download player script ({$playerUrl}).");
+            }
+        } else {
+            throw new YouTubeException('Player script URL not found.');
+        }
     }
 }

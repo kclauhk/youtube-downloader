@@ -79,6 +79,7 @@ class PlayerApiClients
                     ],
                 ],
                 'client_name' => 1,
+                'skip_api' => true,
                 'supports_cookies' => true,
             ],
             'web_embedded' => [
