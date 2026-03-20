@@ -12,32 +12,32 @@ class SignatureLinkParser
     /**
      * @param PlayerApiResponse $apiResponse
      * @param VideoPlayerJs|null $playerJs
-     * @return StreamFormat[]
+     * @return array
      */
     public static function parseLinks(PlayerApiResponse $apiResponse, ?VideoPlayerJs $playerJs = null): array
     {
         $formats_combined = $apiResponse->getAllFormats();
 
-        // final response
-        $return = [];
+        $adaptive = [];
 
         foreach ($formats_combined as $format) {
-            // appear as either "cipher" or "signatureCipher"
-            $cipher = Utils::arrayGet($format, 'cipher', Utils::arrayGet($format, 'signatureCipher', ''));
-
-            // some videos do not need to be decrypted!
+            // some videos do not need to be deciphered
             if (isset($format['url'])) {
-                $return[] = new StreamFormat($format);
+                $adaptive[] = new StreamFormat($format);
                 continue;
             }
 
+            continue;   // skip the following because player JS cannot be used without JS runtime
+
+            // appear as either "cipher" or "signatureCipher"
+            $cipher = Utils::arrayGet($format, 'cipher', Utils::arrayGet($format, 'signatureCipher', ''));
+
             $cipherArray = Utils::parseQueryString($cipher);
 
-            // contains ?ip noting which IP can access it, and ?expire containing link expiration timestamp
             $url = Utils::arrayGet($cipherArray, 'url');
-            $sp = Utils::arrayGet($cipherArray, 'sp'); // used to be 'sig'
+            $sp = Utils::arrayGet($cipherArray, 'sp');  // used to be 'sig'
 
-            // needs to be decrypted!
+            // needs to be deciphered
             $signature = Utils::arrayGet($cipherArray, 's');
 
             $streamUrl = new StreamFormat($format);
@@ -51,13 +51,22 @@ class SignatureLinkParser
                 $streamUrl->url = $url;
             }
 
-            if (preg_match('/\Wsr%3D1\W/', $streamUrl->url)) {
-                $streamUrl->isSr = true;
-            }
-
-            $return[] = $streamUrl;
+            $adaptive[] = self::detectSR($streamUrl);
         }
 
-        return $return;
+        return array_merge(
+            ['adaptive' => $adaptive],
+            $apiResponse->getStreamingUrls(),
+        );
+    }
+
+    // check whether $format is "super resolution" (AI-upscaled)
+    protected static function detectSR(StreamFormat $format): StreamFormat
+    {
+        if (preg_match('/\Wsr%3D1\W/', $format->url)) {
+            $format->isSr = true;
+        }
+
+        return $format;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace YouTube;
 
+use Curl\Response;
 use YouTube\Exception\TooManyRequestsException;
 use YouTube\Exception\VideoNotFoundException;
 use YouTube\Exception\YouTubeException;
@@ -30,7 +31,7 @@ class YouTubeDownloader
         $this->api_clients = new PlayerApiClients();
 
         $this->client->setUserAgent(
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.7390.54 Safari/537.36'
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15'
         );
     }
 
@@ -40,7 +41,7 @@ class YouTubeDownloader
         return $this->client;
     }
 
-    // Specify client for video data request
+    // Client info to be used in API call
     public function getApiClients(): PlayerApiClients
     {
         return $this->api_clients;
@@ -139,42 +140,57 @@ class YouTubeDownloader
         $session_index = $configData->getSessionIndex();
         $user_session_id = $configData->getUserSessionId();
 
-        if (!empty($clients[$client_id]['context']['client']['userAgent'])) {
-            $this->client->setUserAgent($clients[$client_id]['context']['client']['userAgent']);
+        $context = $clients[$client_id]['context'];
+        if (!empty($context['client']['userAgent'])) {
+            $this->client->setUserAgent($context['client']['userAgent']);
         }
-
-        if (isset($clients[$client_id]['config_url'])) {
-            $response = $this->client->get($clients[$client_id]['config_url']);
-            $config = new WatchVideoPage($response);
+        $headers = [];
+        if (!empty($context['thirdParty']['embedUrl'])) {
+            $headers['Referer'] = $context['thirdParty']['embedUrl'];
+        }
+        if (!empty($clients[$client_id]['config_url'])) {
+            $config_url = str_replace('{$video_id}', $video_id, $clients[$client_id]['config_url']);
+            $config = new WatchVideoPage($this->client->get($config_url, [], $headers));
             if (!empty($config->getYouTubeConfigData())) {
                 $configData = $config->getYouTubeConfigData();
             }
             $context = $configData->getContext();
-        } else {
-            $context = $clients[$client_id]['context'];
+            $context = Utils::arrayMergeRecursive($context, $clients[$client_id]['context']);
         }
         foreach (['hl' => 'en', 'timeZone' => 'UTC', 'utcOffsetMinutes' => 0] as $k => $v) {
             $context['client'][$k] = $v;
         }
 
+        if (strpos(print_r($configData, true), '&embeds_enable_encrypted_host_flags_enforcement=true') !== false) {
+            $encrypted_context = $configData->getEncryptedHostFlags();
+        } else {
+            $encrypted_context = null;
+        }
+
         $response = $this->client->post(
-            'https://www.youtube.com/youtubei/v1/player?key=' . $configData->getApiKey(),
+            'https://www.youtube.com/youtubei/v1/player?prettyPrint=false',
             json_encode(
                 array_filter(
                     [
-                        'context' => $context,
                         'videoId' => $video_id,
+                        'context' => $context,
                         'playbackContext' => [
-                            'contentPlaybackContext' => [
-                                'html5Preference' => 'HTML5_PREF_WANTS',
-                                'signatureTimestamp' => $sig_timestamp,
-                            ],
+                            'contentPlaybackContext' => array_filter(
+                                [
+                                    'html5Preference' => 'HTML5_PREF_WANTS',
+                                    'signatureTimestamp' => $sig_timestamp,
+                                    'encryptedHostFlags' => $encrypted_context,
+                                ],
+                                function ($v) {
+                                    return !is_null($v);
+                                }
+                            ),
                         ],
                         'racyCheckOk' => true,
                         'params' => ($clients[$client_id]['params'] ?? null),
                     ],
                     function ($v) {
-                        return ($v || is_numeric($v));
+                        return !is_null($v);
                     }
                 )
             ),
@@ -183,6 +199,7 @@ class YouTubeDownloader
                     [
                         'Content-Type' => 'application/json',
                         'Origin' => 'https://www.youtube.com',
+                        'Referer' => $config_url ?? null,
                         'X-Origin' => 'https://www.youtube.com',
                         'X-Goog-PageId' => $page_id,
                         'X-Goog-Visitor-Id' => $visitor_id,
@@ -190,7 +207,7 @@ class YouTubeDownloader
                         'X-Youtube-Client-Version' => $context['client']['clientVersion'],
                     ],
                     function ($v) {
-                        return ($v || is_numeric($v));
+                        return !is_null($v);
                     }
                 ),
                 (
@@ -223,6 +240,7 @@ class YouTubeDownloader
             throw new \InvalidArgumentException('Invalid video ID: ' . $video);
         }
 
+        $clients = $this->api_clients::$clients;
         $lang = null;
         $client_ids = ['android_vr'];
         if ($extra) {
@@ -239,6 +257,14 @@ class YouTubeDownloader
                 }
             } elseif (is_string($extra)) {
                 $client_ids = explode(',', preg_replace('/\s+/', '', $extra)) ?: $client_ids;
+            }
+            if (
+                !empty($client_ids)
+                && (count(array_filter($client_ids, function ($v) use ($clients) {
+                    return isset($clients[$v]);
+                })) === 0)
+            ) {
+                throw new YouTubeException('Player client "' . implode('", "', $client_ids) . '" not defined');
             }
         }
 
@@ -260,44 +286,54 @@ class YouTubeDownloader
         $youtube_config_data = $page->getYouTubeConfigData();
 
         $links = [];
+        $dash_url = $hls_url = $sabr_url = null;
         foreach ($client_ids as $i => $client_id) {
-            // the most reliable way of fetching all download links no matter what
-            // query: /youtubei/v1/player for some additional data
-            $player_response = $this->getPlayerApiResponse($video_id, strtolower($client_id), $youtube_config_data);
-
-            preg_match('/videoId"\s*:\s*"([^"]+)"/', print_r($player_response, true), $matches);
-            if ($status_reason = $player_response->getPlayabilityStatusReason()) {
-                throw new YouTubeException("Player response: {$status_reason}");
-            } elseif (($matches[1] ?? '') != $video_id) {
-                if ($player_error = $player_response->getErrorMessage()) {
-                    throw new YouTubeException("Player response: {$player_error}");
+            try {
+                if (empty($clients[$client_id]['skip_api'])) {
+                    // the most reliable way of fetching all download links no matter what
+                    // query: /youtubei/v1/player for some additional data
+                    $player_response = $this->getPlayerApiResponse($video_id, strtolower($client_id), $youtube_config_data);
+                } else {
+                    // use InitialPlayerResponse
+                    $response = new Response();
+                    $response->body = json_encode($page->getPlayerResponse()->toArray());
+                    $player_response = new PlayerApiResponse($response);
                 }
-                // throws exception if player response does not belong to the requested video
-                throw new YouTubeException('Invalid player response: got player response for video "'
-                                           . ($matches[1] ?? '') . '" instead of "' . $video_id . '"');
-            }
 
-            // get player.js location that holds URL signature decipher function
-            $player_url = $page->getPlayerScriptUrl();
-            $response = $this->client->get($player_url);
-            $player = new VideoPlayerJs($response);
+                preg_match('/videoId"\s*:\s*"([^"]+)"/', print_r($player_response, true), $matches);
+                if ($status_reason = $player_response->getPlayabilityStatusReason()) {
+                    throw new YouTubeException("Player response: {$status_reason}");
+                } elseif (($matches[1] ?? '') != $video_id) {
+                    if ($player_error = $player_response->getErrorMessage()) {
+                        throw new YouTubeException("Player response: {$player_error}");
+                    }
+                    // throws exception if player response does not belong to the requested video
+                    throw new YouTubeException('Invalid player response: got player response for video "'
+                                               . ($matches[1] ?? '') . '" instead of "' . $video_id . '"');
+                }
 
-            $parsed = SignatureLinkParser::parseLinks($player_response, $player);
-            if (count($client_ids) > 1) {
-                foreach ($parsed as $k => $v) {
-                    $parsed[$k]->_pref = -$i;
+                $parsed = SignatureLinkParser::parseLinks($player_response);
+                if (count($client_ids) > 1) {
+                    foreach ($parsed['adaptive'] as $k => $v) {
+                        $parsed['adaptive'][$k]->_pref = -$i;
+                    }
+                }
+                $links = array_merge($links, $parsed['adaptive']);
+
+                $dash_url ??= $parsed['dash'];
+                $hls_url ??= $parsed['hls'];
+                $sabr_url ??= $parsed['sabr'];
+            } catch (YouTubeException $e) {
+                if ($i === count($client_ids) - 1 && empty($links)) {
+                    throw new YouTubeException($e->getMessage());
                 }
             }
-            $links = array_merge($links, $parsed);
-
-            $streaming_urls ??= $player_response->getStreamingUrls();
-            $dash_url ??= $streaming_urls['dash'];
-            $hls_url ??= $streaming_urls['hls'];
-            $sabr_url ??= $streaming_urls['sabr'];
         }
 
         if (count($client_ids) > 1) {
-            // sorting order: combined (smaller itag first) >> video (higher resolution >> smaller itag) >> audio (lower quality first)
+            // sorting order:   combined (smaller itag first)
+            //                  >> video (higher resolution >> smaller itag)
+            //                  >> audio (lower quality first)
             usort(
                 $links,
                 fn($a, $b) => $b->mimeType[0] <=> $a->mimeType[0]
