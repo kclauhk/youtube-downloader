@@ -24,24 +24,19 @@ class JsRuntime
             if (empty(static::$hash)) {
                 throw new YouTubeException("JS runtime error: API key required");
             } else {
-                if (
-                    $result = file_get_contents($path, false, stream_context_create([
-                        'http' => [
-                            'method' => 'POST',
-                            'header'  => "Content-Type: text/plain\r\n"
-                                         . 'X-Token: ' . static::$hash,
-                            'content' => 'decodeURIComponent("%3Fx%3Dtest")',
-                        ],
-                    ]))
-                ) {
-                    if ($result == '?x=test') {
+                $response = (new Browser())->post($path, 'decodeURIComponent("%3Fx%3Dtest")', [
+                    'Content-Type' => 'text/plain',
+                    'X-Token' => static::$hash,
+                ]);
+                if ($response->status == 200) {
+                    if ($response->body == '?x=test') {
                         static::$app = $path;
                         static::$ver = '(remote)';
                         return true;
                     }
-                } elseif (strpos(($http_response_header ?? [''])[0], ' 200 ') === false) {
+                } else {
                     throw new YouTubeException(
-                        "JS runtime error: " . (empty($http_response_header) ? 'no response' : $http_response_header[0])
+                        'JS runtime error: ' . ($response->error ?: "HTTP response code {$response->status}")
                     );
                 }
             }
@@ -128,27 +123,29 @@ class JsRuntime
         }
 
         if (static::$ver == '(remote)') {
-            $header = "Content-Type: text/plain\r\n"
-                      . 'X-Token: ' . static::$hash;
+            $header = [
+                'Content-Type' => 'text/plain',
+                'X-Token' => static::$hash,
+            ];
             if (extension_loaded('zlib')) {
                 $jsCode = gzencode($jsCode, 9);
-                $header .= "\r\nContent-Encoding: gzip";
+                $header['Content-Encoding'] = 'gzip';
             }
-            $result = file_get_contents(static::$app, false, stream_context_create([
-                'http' => [
-                    'method' => 'POST',
-                    'header'  => $header,
-                    'content' => $jsCode,
-                    'ignore_errors' => true,
-                ]]));
-            if (strpos(($http_response_header ?? [''])[0], ' 200 ') === false) {
-                throw new YouTubeException(
-                    "Status '" . (empty($http_response_header) ? 'no response' : $http_response_header[0]) . "'"
-                );
-            } elseif (preg_match('/content-encoding:\s*([^|]+)/', strtolower(implode('|', $http_response_header)), $match)) {
-                if ($match[1] == 'gzip') {
-                    $result = gzdecode($result);
+            $client = new Browser();
+            $client->setCurlOption(CURLOPT_HEADER, 1);
+            $response = $client->post(static::$app, $jsCode, $header);
+            if ($response->status == 200) {
+                $result = substr($response->body, $response->info->header_size);
+                $responseHeader = strtolower(substr($response->body, 0, $response->info->header_size));
+                if (preg_match('/content-encoding:\s*([^|]+)/', $responseHeader, $match)) {
+                    if ($match[1] == 'gzip') {
+                        $result = gzdecode($result);
+                    }
                 }
+            } else {
+                throw new YouTubeException(
+                    "Status '" . ($response->error ?: "HTTP response code {$response->status}") . "'"
+                );
             }
         } else {
             $tmpFile = $this->getTempDir() . 'yt_' . hash('sha1', uniqid('', true)) . '.dump';

@@ -70,21 +70,12 @@ class JsChallengeSolver
     protected function getJsCode(): array
     {
         $jsCode = [];
-        $context = [
-            'ssl' => [
-                'verify_peer' => false,
-                'verify_peer_name' => false,
-            ],
-        ];
         $tmpDir = self::$jsrt->getTempDir();
-        if (
-            $hashes = file_get_contents(
-                'https://github.com/kclauhk/yt-ejs/raw/refs/heads/main/js/_hashes.json',
-                false,
-                stream_context_create($context)
-            )
-        ) {
-            $hashes = json_decode($hashes, true);
+
+        $client = new Browser();
+        $response = $client->get('https://github.com/kclauhk/yt-ejs/raw/refs/heads/main/js/_hashes.json');
+        if ($response->status == 200) {
+            $hashes = json_decode($response->body, true);
             if (is_array($hashes)) {
                 $jsFiles = array_keys($hashes);
                 if (
@@ -125,23 +116,21 @@ class JsChallengeSolver
             }
             return $jsCode;
         }
+
         // solver JS files outdated/not yet downloaded
-        foreach (($jsFiles ?? ['yt.solver.lib.min.js', 'yt.solver.core.min.js']) as $file) {
-            if (
-                !$data = file_get_contents(
-                    "https://github.com/kclauhk/yt-ejs/raw/refs/heads/main/js/{$file}",
-                    false,
-                    stream_context_create($context)
-                )
-            ) {
-                throw new YouTubeException("Failed to download challenge solver \"{$file}\" script");
-            } else {
+        $jsFiles = !empty($jsFiles) ? $jsFiles : ['yt.solver.lib.min.js', 'yt.solver.core.min.js'];
+        foreach ($jsFiles as $file) {
+            $response = $client->get("https://github.com/kclauhk/yt-ejs/raw/refs/heads/main/js/{$file}");
+            if ($response->status == 200) {
+                $data = $response->body;
                 file_put_contents("{$tmpDir}{$file}", $data);
                 if (strpos($file, 'lib') !== false) {
                     array_unshift($jsCode, $data);
                 } elseif (strpos($file, 'core') !== false) {
                     $jsCode[] = $data;
                 }
+            } else {
+                throw new YouTubeException("Failed to download challenge solver \"{$file}\" script");
             }
         }
         return $jsCode;
