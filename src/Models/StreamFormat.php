@@ -16,6 +16,7 @@ class StreamFormat extends JsonObject
     public ?string $audioQuality = null;
     public ?int $audioSampleRate = null;
     public bool $isDrc = false;
+    public bool $isVb = false;  // Voice boost
     public bool $isSr = false;  // Super resolution
     public ?string $url = null;
     public ?string $signatureCipher = null;
