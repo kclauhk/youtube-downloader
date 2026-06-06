@@ -14,6 +14,7 @@ class PlayerApiClients
         // InnerTube Clients
         // list of known clients: https://github.com/zerodytrash/YouTube-Internal-Clients
         static::$clients = static::$clients ?? [
+            /*
             'android' => [
                 'context' => [
                     'client' => [
@@ -27,6 +28,7 @@ class PlayerApiClients
                 'client_name' => 3,
                 'supports_cookies' => false,
             ],
+            */
             'android_vr' => [
                 'context' => [
                     'client' => [
@@ -43,7 +45,8 @@ class PlayerApiClients
                 'client_name' => 28,
                 'supports_cookies' => false,
             ],
-            'ios' => [       // only HLS formats usable
+            /*
+            'ios' => [       // no longer offers HLS formats
                 'context' => [
                     'client' => [
                         'clientName' => 'IOS',
@@ -58,6 +61,7 @@ class PlayerApiClients
                 'client_name' => 5,
                 'supports_cookies' => false,
             ],
+            */
         ];
     }
 
