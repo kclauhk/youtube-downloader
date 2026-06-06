@@ -6,7 +6,7 @@ use YouTube\Exception\YouTubeException;
 
 class JsChallengeSolver
 {
-    protected static $jsrt = null;
+    protected static JsRuntime $jsrt;
 
     public function __construct()
     {
@@ -17,7 +17,7 @@ class JsChallengeSolver
      * @param array  $n_params
      * @param array  $signatures
      * @param string $js_code   Complete source code for YouTube's player.js
-     * @return string
+     * @return array|null
      */
     public function solve(array $n_params, array $signatures, string $js_code): ?array
     {

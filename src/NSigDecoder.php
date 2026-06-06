@@ -99,9 +99,7 @@ class NSigDecoder
             $func_code = (strpos($matches[1], stripslashes($func_name)) === 0 ? 'var ' : '') . $matches[1];
         } elseif (preg_match('@(function\s+' . $func_name . '\s*\([\s\S]*?})\s+function@', $js_code, $matches)) {
             $func_code = $matches[1];
-        }
-
-        if (!$func_code) {
+        } else {
             throw new YouTubeException('Failed to extract n function code');
         }
 
@@ -122,7 +120,7 @@ class NSigDecoder
                 )
             ) {
                 $func_name = end($matches[1]);
-
+                $func_code = null;
                 if (preg_match(str_replace('{$func_name}', $func_name, self::REGEX_FUNC_CODE), $js_code, $matches)) {
                     $func_code = (strpos($matches[1], stripslashes($func_name)) === 0 ? 'var ' : '') . $matches[1];
                 } elseif (preg_match("@(function\s+{$func_name}\s*\([\s\S]*?})\s+function@", $js_code, $matches)) {

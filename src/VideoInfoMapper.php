@@ -41,7 +41,7 @@ class VideoInfoMapper
         return $result;
     }
 
-    public static function fromInitialData($initialData, VideoInfo $referenceInfo): VideoInfo
+    public static function fromInitialData(?array $initialData, VideoInfo $referenceInfo): VideoInfo
     {
         $primaryInfo = Utils::arrayGet(
             $initialData,
@@ -121,8 +121,8 @@ class VideoInfoMapper
                     if (!empty($url)) {
                         if (
                             $url[-1] == '/'
-                            && preg_match('@' . preg_quote($url) . '(?:\s|$)@', $referenceDesc) === 0
-                            && preg_match('@' . preg_quote(rtrim($url, '/')) . '(?:\s|$)@', $referenceDesc)
+                            && preg_match('@' . preg_quote($url, '@') . '(?:\s|$)@', $referenceDesc) === 0
+                            && preg_match('@' . preg_quote(rtrim($url, '/'), '@') . '(?:\s|$)@', $referenceDesc)
                         ) {
                             $url = rtrim($url, '/');
                         }

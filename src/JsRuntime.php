@@ -13,7 +13,7 @@ class JsRuntime
     protected static string $hash = ''; // hash value of API key of remote JS runtime
     public static string $ver = '';
 
-    public function setApiKey(string $api_key)
+    public function setApiKey(string $api_key): void
     {
         static::$hash = hash('sha3-512', $api_key);
     }
@@ -76,6 +76,10 @@ class JsRuntime
                 if (is_executable($file)) {
                     static::$ver = exec($file . ' -v');
                     static::$app = $file;
+
+                    if (substr(static::$ver, 0, 4) == 'deno') {
+                        static::$arg = '--ext=js --no-code-cache --no-prompt --no-remote --no-lock --node-modules-dir=none --no-config';
+                    }
                     return static::$app;
                 }
             }
@@ -83,12 +87,6 @@ class JsRuntime
         } else {
             throw new YouTubeException('Deno not found');
         }
-
-        if (substr(static::$ver, 0, 4) == 'deno') {
-            static::$arg = '--ext=js --no-code-cache --no-prompt --no-remote --no-lock --node-modules-dir=none --no-config';
-        }
-
-        return static::$app;
     }
 
     public function setArg(string $arguments): void
@@ -106,10 +104,10 @@ class JsRuntime
      * @param string    $codeStr    JavaScript code or format string of JavaScript code
      * @param array     $spValue    values for format specifiers
      * @param string    $value      original value of n/s
-     * @return string/null          return value of JavaScript code or null if no return value
+     * @return string|null          return value of JavaScript code or null if no return value
      * @throws YouTubeException
      */
-    public function run(string $type, string $codeStr, array $spValue = [], string $value = null): ?string
+    public function run(string $type, string $codeStr, array $spValue = [], string $value = ''): ?string
     {
         if (empty(static::$app)) {
             throw new YouTubeException('JS runtime not available');
@@ -182,7 +180,7 @@ class JsRuntime
         return true;
     }
 
-    public function setTempDir($path): void
+    public function setTempDir(string $path): void
     {
         if (empty(realpath($path)) || !is_dir($path)) {
             trigger_error("{$path}: No such directory", E_USER_WARNING);

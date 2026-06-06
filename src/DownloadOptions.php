@@ -13,7 +13,7 @@ class DownloadOptions
     private array $formats = [];
 
     /** @var VideoInfo|null */
-    private VideoInfo $info;
+    private ?VideoInfo $info;
 
     /** @var array|null */
     private ?array $captions;
@@ -23,8 +23,12 @@ class DownloadOptions
     private ?string $hlsManifestUrl;
     private ?string $serverAbrStreamingUrl;
 
-    public function __construct(array $formats, array $streaming_urls, VideoInfo $info, ?array $captions)
-    {
+    public function __construct(
+        array $formats,
+        array $streaming_urls = [null, null, null],
+        ?VideoInfo $info = null,
+        ?array $captions = null,
+    ) {
         $this->formats = $formats;
         $this->info = $info;
         $this->captions = $captions;
@@ -44,7 +48,7 @@ class DownloadOptions
     /**
      * @return VideoInfo|null
      */
-    public function getInfo(): VideoInfo
+    public function getInfo(): ?VideoInfo
     {
         return $this->info;
     }
