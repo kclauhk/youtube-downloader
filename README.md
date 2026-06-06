@@ -2,8 +2,11 @@ This is forked from [Athlon1600/youtube-downloader](https://github.com/Athlon160
 
 # YouTube Downloader
 
-![](https://img.shields.io/github/license/kclauhk/youtube-downloader.svg)
+![PHP Versions](https://img.shields.io/badge/PHP%20Versions-%5E7.4%20%7C%7C%20%5E8.0-blue)
+[![](https://img.shields.io/github/license/kclauhk/youtube-downloader.svg)](https://github.com/kclauhk/youtube-downloader?tab=MIT-1-ov-file#)
 ![](https://img.shields.io/packagist/dt/kclauhk/youtube-downloader.svg)
+[![Build](https://github.com/kclauhk/youtube-downloader/actions/workflows/build.yml/badge.svg)](https://github.com/kclauhk/youtube-downloader/actions/workflows/build.yml)
+[![Run Tests](https://github.com/kclauhk/youtube-downloader/actions/workflows/tests.yml/badge.svg)](https://github.com/kclauhk/youtube-downloader/actions/workflows/tests.yml)
 ![](https://img.shields.io/github/last-commit/kclauhk/youtube-downloader.svg)
 
 This project was inspired by a very popular youtube-dl python package:  
@@ -12,7 +15,7 @@ https://github.com/ytdl-org/youtube-dl
 Yes, there are multiple other PHP-based youtube downloaders on the Internet, 
 but most of them haven't been updated in years, or they depend on youtube-dl itself.  
 
-Pure PHP-based youtube downloaders that work, and are **kept-up-to date** just do not exist.
+Pure PHP-based YouTube downloaders that work, and are **kept-up-to date** just do not exist.
 
 *For [v4.1.x](https://github.com/kclauhk/youtube-downloader/tree/4.1.x),*  
 the script uses no JavaScript interpreters, no calls to shell... nothing but pure PHP with no heavy dependencies either.
