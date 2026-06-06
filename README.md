@@ -58,7 +58,7 @@ composer require kclauhk/youtube-downloader "~4.1.2"
   ```
 (The old way to specify the player client(s) remains valid)
 
-### DASH/HLS manifest (available in "ios"/"web" and live streams)
+### DASH/HLS manifest (available in "web" and live streams)
 To get the URL of the DASH/HLS manifest  
 ```php
 $manifestUrl = $downloadOptions->getHlsManifestUrl();
@@ -78,24 +78,31 @@ You may use other JS runtimes. [Here](https://github.com/kclauhk/youtube-downloa
 Hence, "TVHTML5", which requires n deciphering, is added (client ID: `tv`) and is set as default client if a JS runtime is available.  
 
 ### player client can be added/modified
-The currently available clients are `android`, `android_vr`, `ios`, `tv`, `web` (Safari user agent) and `web_embedded`.
+The currently available clients are `android_vr`, `tv`, `web` (Safari user agent) and `web_embedded`.
 You can add additional clients/modify the built-in clients by:  
   `$youtube->getApiClients()->setClient($clientId, $context);`
 - `$clientId` - ID of the player client
 - `$context`  - data in an array of key-value pairs which must contain "clientName" and "clientVersion",  
-  for example, adding "WEB_EMBEDDED_PLAYER":  
+  for example, adding "MWEB":  
   ```php
   $client = array(
-      'clientName' => 'WEB_EMBEDDED_PLAYER',
-      'clientVersion' => '1.20241201.00.00',
+      'context' => [
+          'client' => [
+              'clientName' => 'MWEB',
+              'clientVersion' => '2.20260115.01.00',
+              'userAgent' => 'Mozilla/5.0 (iPad; CPU OS 16_7_10 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+          ],
+      ],
+      'client_name' => 2,
+      'supports_cookies' => true,
   );
-  $youtube->getApiClients()->setClient('web_embedded', $client);
-  $downloadOptions = $youtube->getDownloadLinks($url, 'web_embedded');    // use 'web_embedded'
+  $youtube->getApiClients()->setClient('mweb', $client);
+  $downloadOptions = $youtube->getDownloadLinks($url, 'mweb');    // use 'mweb'
   ```
   (client which requires a PO token is not supported)
 
 ### Changes since [v4.1.0](https://github.com/kclauhk/youtube-downloader/releases/tag/v4.1.0)
-- Two YouTube clients (client ID: "android_vr" and "ios") are built into YouTubeDownloader
+- Two YouTube clients (client ID: "android_vr" ~~and "ios"~~) are built into YouTubeDownloader
   - To specify a player client
     ```php
     $downloadOptions = $youtube->getDownloadLinks($url, $clientId);
