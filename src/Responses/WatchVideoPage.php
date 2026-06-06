@@ -152,22 +152,21 @@ class WatchVideoPage extends HttpResponse
 
     /**
      * Parse chapter info from this page without making any additional requests
-     * @return array|null;
+     * @return array|null
      */
     protected function getChapterInfo(): ?array
     {
+        $result = [];
         if (preg_match(self::REGEX_MARKERS_MAP, $this->getResponseBody(), $matches)) {
-            foreach (json_decode($matches[1], JSON_OBJECT_AS_ARRAY)['chapters'] as $chapter) {
+            foreach (json_decode($matches[1], true)['chapters'] as $chapter) {
                 $ch = new Chapter();
                 $ch->title = Utils::arrayGet($chapter, 'chapterRenderer.title');
                 $ch->timeRangeStartMillis = Utils::arrayGet($chapter, 'chapterRenderer.timeRangeStartMillis');
                 $ch->thumbnails = Utils::arrayGet($chapter, 'chapterRenderer.thumbnail.thumbnails');
                 $result[] = $ch;
             }
-
-            return $result;
         }
 
-        return null;
+        return $result ?: null;
     }
 }

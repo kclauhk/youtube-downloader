@@ -113,6 +113,8 @@ class SignatureDecoder
         } elseif (preg_match('/' . $func_name . '=\s*function\s*\(\s*\S+\s*\)\s*{(.*?)}/', $player_html, $matches)) {
             $js_code = $matches[1];
             $js_func = 'var ' . $matches[0];
+        } else {
+            $js_code = $js_func = null;
         }
 
         if ($js_code) {

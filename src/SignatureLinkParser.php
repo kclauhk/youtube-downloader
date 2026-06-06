@@ -28,6 +28,7 @@ class SignatureLinkParser
         $decoded_n = [];
         $decoded_s = [];
         $ciphers = [];
+        $error = null;
 
         $streamingUrls = $apiResponse->getStreamingUrls();
         foreach (array_filter($streamingUrls) as $u) {
@@ -42,6 +43,7 @@ class SignatureLinkParser
             if (isset($format['url'])) {
                 // appear as "url"
                 $url = $format['url'];
+                $signature = $sp = null;
             } else {
                 // appear as either "cipher" or "signatureCipher"
                 $cipher = Utils::arrayGet($format, 'cipher', Utils::arrayGet($format, 'signatureCipher', ''));
@@ -63,7 +65,7 @@ class SignatureLinkParser
 
             // download player js if needed
             if (($nParams || $signatures) && !isset($useSolver)) {
-                if ($playerJs->getResponse()->info->http_code === null) {
+                if (!isset($playerJs->getResponse()->info->http_code)) {
                     try {
                         $playerJsCode = self::getPlayerScript($playerJs);
                     } catch (YouTubeException $e) {
@@ -95,6 +97,7 @@ class SignatureLinkParser
                             }
                         }
                     } catch (YouTubeException $e) {
+                        // @phpstan-ignore property.notFound
                         $streamUrl->_error[] = "Unable to decipher n: {$e->getMessage()}. {$error403} (player: {$playerUrl})";
                     }
                 }
@@ -106,6 +109,7 @@ class SignatureLinkParser
                     try {
                         $decoded_signature = $sDecoder->decode($signature, $playerJsCode);
                     } catch (YouTubeException $e) {
+                        // @phpstan-ignore property.notFound
                         $streamUrl->_error[] = "Unable to decipher s: {$e->getMessage()}. {$error403} (player: {$playerUrl})";
                     }
                     $streamUrl->url = $url . (empty($decoded_signature) ? '' : "&$sp=" . urlencode($decoded_signature));
@@ -117,6 +121,7 @@ class SignatureLinkParser
             }
 
             if (!empty($error)) {
+                // @phpstan-ignore property.notFound
                 $streamUrl->_error[] = $error;
             }
 
@@ -148,6 +153,7 @@ class SignatureLinkParser
                     } else {
                         $streamUrl->url = $ciphers[$k][2];
                         if (!empty($error)) {
+                            // @phpstan-ignore property.notFound
                             $streamUrl->_error[] = $error;
                         }
                     }
@@ -163,6 +169,7 @@ class SignatureLinkParser
                             $streamUrl->url
                         );
                     } elseif (!empty($error)) {
+                        // @phpstan-ignore property.notFound
                         $streamUrl->_error[] = $error;
                     }
                 }

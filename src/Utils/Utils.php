@@ -140,6 +140,7 @@ class Utils
                 return implode('', (array) $array[$key]['simpleText']);
             } elseif (array_key_exists('runs', $array[$key])) {
                 // text segments in 'runs'
+                $text = [];
                 $runs = $array[$key]['runs'];
                 foreach ($runs as $run) {
                     if (array_key_exists('text', $run)) {

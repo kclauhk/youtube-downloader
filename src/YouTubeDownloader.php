@@ -242,8 +242,8 @@ class YouTubeDownloader
 
     /**
      *
-     * @param string $video_id
-     * @param array/string $extra       array of options, e.g. ['client'=>'tv', 'lang'=>'fr'] or
+     * @param string $video             any piece of text
+     * @param array|string $extra       array of options, e.g. ['client'=>'tv', 'lang'=>'fr'] or
      *                                  comma-delimited list of player client IDs (the 1st in the
      *                                  list has the highest preference)
      * @return DownloadOptions
@@ -260,6 +260,7 @@ class YouTubeDownloader
         }
 
         $clients = $this->api_clients::$clients;
+        $client_ids = [];
         $lang = null;
         if ($extra) {
             if (is_array($extra)) {
@@ -274,7 +275,7 @@ class YouTubeDownloader
                                   : explode(',', preg_replace('/\s+/', '', $extra['client']));
                 }
             } elseif (is_string($extra)) {
-                $client_ids = explode(',', preg_replace('/\s+/', '', $extra)) ?: $client_ids;
+                $client_ids = explode(',', preg_replace('/\s+/', '', $extra));
             }
             if (
                 !empty($client_ids)
@@ -330,7 +331,7 @@ class YouTubeDownloader
             }
         }
         $response = new Response();
-        $response->info = json_decode('{"url":"' . $player_url . '","http_code":null}');
+        $response->info = json_decode('{"url":"' . $player_url . '"}');
         $player = new VideoPlayerJs($response);
 
         $links = [];
@@ -410,7 +411,7 @@ class YouTubeDownloader
 
         // since we already have that information anyways...
         $info = $page->getVideoInfo($lang);
-        $captions = $this->getCaptions($player_response);
+        $captions = isset($player_response) ? $this->getCaptions($player_response) : null;
 
         return new DownloadOptions($links, [$dash_url, $hls_url, $sabr_url], $info, $captions);
     }
@@ -421,21 +422,17 @@ class YouTubeDownloader
      */
     protected function getCaptions(PlayerApiResponse $player_response): array
     {
-        if ($player_response) {
-            return array_map(function ($item) {
-                $baseUrl = Utils::arrayGet($item, 'baseUrl');
+        return array_map(function ($item) {
+            $baseUrl = Utils::arrayGet($item, 'baseUrl');
 
-                $temp = new YouTubeCaption();
-                $temp->name = Utils::arrayGetText($item, 'name');
-                $temp->baseUrl = Utils::relativeToAbsoluteUrl($baseUrl, 'www.youtube.com');
-                $temp->languageCode = Utils::arrayGet($item, 'languageCode');
-                $vss = Utils::arrayGet($item, 'vssId');
-                $temp->isAutomatic = Utils::arrayGet($item, 'kind') === 'asr' || strpos($vss, 'a.') !== false;
-                return $temp;
-            }, $player_response->getCaptionTracks());
-        }
-
-        return [];
+            $caption = new YouTubeCaption();
+            $caption->name = Utils::arrayGetText($item, 'name');
+            $caption->baseUrl = Utils::relativeToAbsoluteUrl($baseUrl, 'www.youtube.com');
+            $caption->languageCode = Utils::arrayGet($item, 'languageCode');
+            $vss = Utils::arrayGet($item, 'vssId');
+            $caption->isAutomatic = Utils::arrayGet($item, 'kind') === 'asr' || strpos($vss, 'a.') !== false;
+            return $caption;
+        }, $player_response->getCaptionTracks());
     }
 
     public function getThumbnails(string $video_id): array
