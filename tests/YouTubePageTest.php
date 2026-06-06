@@ -2,7 +2,9 @@
 
 namespace YouTube\Tests;
 
+use Curl\Response;
 use YouTube\YouTubeDownloader;
+use YouTube\Responses\WatchVideoPage;
 
 class YouTubePageTest extends TestCase
 {
@@ -17,9 +19,14 @@ class YouTubePageTest extends TestCase
         ];
 
         foreach ($agents as $agent) {
-            $youtube->getBrowser()->setUserAgent($agent);
+            //$youtube->getBrowser()->setUserAgent($agent);
 
-            $page = $youtube->getPage(self::BUNNY_VIDEO_ID);
+            //$page = $youtube->getPage(self::BUNNY_VIDEO_ID);
+
+            $i = array_search($agent, $agents);
+            $response = new Response();
+            $response->body = file_get_contents(dirname(dirname(__FILE__)) . "/etc/youtube_page{$i}.html");
+            $page = new WatchVideoPage($response);
 
             $info = $page->getVideoInfo();
 

@@ -25,6 +25,8 @@ class YouTubeTest extends TestCase
     {
         $downloader = new YouTubeDownloader();
 
+        $this->expectException(YouTubeException::class);
+
         $ret = $downloader->getDownloadLinks(self::BUNNY_VIDEO_ID);
 
         $this->assertGreaterThan(0, count($ret->getAllFormats()));
