@@ -140,6 +140,7 @@ class Utils
                 return implode('', (array) $array[$key]['simpleText']);
             } elseif (array_key_exists('runs', $array[$key])) {
                 // text segments in 'runs'
+                $text = [];
                 $runs = $array[$key]['runs'];
                 foreach ($runs as $run) {
                     if (array_key_exists('text', $run)) {
@@ -151,5 +152,20 @@ class Utils
         }
 
         return $default;
+    }
+
+    public static function arrayMergeRecursive(array &$array1, array &$array2): array
+    {
+        $merged = $array1;
+
+        foreach ($array2 as $key => &$value) {
+            if (is_array($value) && isset($merged[$key]) && is_array($merged[$key])) {
+                $merged[$key] = self::arrayMergeRecursive($merged[$key], $value);
+            } else {
+                $merged[$key] = $value;
+            }
+        }
+
+        return $merged;
     }
 }

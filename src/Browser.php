@@ -8,10 +8,13 @@ use YouTube\Utils\Utils;
 
 class Browser extends BrowserClient
 {
+    /**
+     * @param string $user_agent
+     */
     public function setUserAgent($user_agent): void
     {
         if (is_string($user_agent) && $user_agent !== '') {
-            if (is_callable('parent::setUserAgent')) {
+            if (method_exists(new parent(), 'setUserAgent')) {
                 parent::setUserAgent($user_agent);
             } else {
                 $this->headers['User-Agent'] = $user_agent;

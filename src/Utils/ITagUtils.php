@@ -60,8 +60,8 @@ class ITagUtils
 
     public static function parseItagInfo(int $itag): string
     {
-        if (array_key_exists($itag, static::$itag_detailed)) {
-            return static::$itag_detailed[$itag];
+        if (array_key_exists($itag, self::$itag_detailed)) {
+            return self::$itag_detailed[$itag];
         }
 
         return 'Unknown';
@@ -116,10 +116,10 @@ class ITagUtils
         139 => 'm4a, audio',
         140 => 'm4a, audio',
         141 => 'm4a, audio',
-        256 => 'm4a, audio',
-        258 => 'm4a, audio',
+        256 => 'm4a, audio',            // 6-CH
+        258 => 'm4a, audio',            // 6-CH
         325 => 'm4a, audio',
-        328 => 'm4a, audio',
+        328 => 'm4a, audio',            // 6-CH, ec-3
         167 => 'webm, video, 360p',
         168 => 'webm, video, 480p',
         169 => 'webm, video, 720p',
@@ -148,9 +148,6 @@ class ITagUtils
         251 => 'webm, audio',
         600 => 'webm, audio',           // ultralow
         599 => 'm4a, audio',            // ultralow
-        256 => 'm4a, audio',            // 6-CH
-        258 => 'm4a, audio',            // 6-CH
-        328 => 'm4a, audio',            // 6-CH, ec-3
         380 => 'm4a, audio',            // 6-CH, ac-3
         598 => 'webm, video, 144p',     // 15 FPS
         330 => 'webm, video, 144p',     // 60 FPS, HDR

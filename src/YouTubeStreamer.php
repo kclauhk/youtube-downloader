@@ -81,13 +81,13 @@ class YouTubeStreamer
         }
 
         // otherwise you get weird "OpenSSL SSL_read: No error"
-        curl_setopt($ch, CURLOPT_FORBID_REUSE, 1);
-        curl_setopt($ch, CURLOPT_FRESH_CONNECT, 1);
+        curl_setopt($ch, CURLOPT_FORBID_REUSE, true);
+        curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
         curl_setopt($ch, CURLOPT_BUFFERSIZE, $this->buffer_size);
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -97,12 +97,12 @@ class YouTubeStreamer
         curl_setopt($ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
 
         //curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
 
         // we deal with this ourselves
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 0);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+        curl_setopt($ch, CURLOPT_HEADER, false);
 
         curl_setopt($ch, CURLOPT_HEADERFUNCTION, [$this, 'headerCallback']);
 
@@ -126,13 +126,13 @@ class YouTubeStreamer
      * @param $proxy_server
      * @param $proxy_type
      */
-    public function setProxy($proxy_server, $proxy_type = CURLPROXY_HTTP): void
+    public function setProxy(string $proxy_server, int $proxy_type = CURLPROXY_HTTP): void
     {
         $this->options[CURLOPT_PROXY] = $proxy_server;
         $this->options[CURLOPT_PROXYTYPE] = $proxy_type;
     }
 
-    public function setCookieFile($cookie_file): void
+    public function setCookieFile(string $cookie_file): void
     {
         // read & write cookies
         $this->options[CURLOPT_COOKIEJAR] = $cookie_file;

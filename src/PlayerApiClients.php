@@ -81,7 +81,6 @@ class PlayerApiClients
             throw new YouTubeException(
                 'Invalid client context: ' . ($has_name ? '"clientVersion"' : '"clientName"') . ' is missing'
             );
-            return false;
         }
 
         static::$clients[$client_id] = empty($ctx_c) ? ['context' => ['client' => $context]] : $context;

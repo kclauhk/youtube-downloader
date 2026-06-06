@@ -27,8 +27,7 @@ class SignatureLinkParser
                 continue;
             }
 
-            continue;   // skip the following because player JS cannot be used without JS runtime
-
+            /* skip the following because player JS cannot be used without JS runtime
             // appear as either "cipher" or "signatureCipher"
             $cipher = Utils::arrayGet($format, 'cipher', Utils::arrayGet($format, 'signatureCipher', ''));
 
@@ -52,6 +51,7 @@ class SignatureLinkParser
             }
 
             $adaptive[] = self::detectSR($streamUrl);
+            */
         }
 
         return array_merge(
