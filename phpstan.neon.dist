@@ -4,5 +4,6 @@ parameters:
 		- src
 		- tests
 	ignoreErrors:
-	    - '#no value type specified in iterable type array#'
-	    - '#PHPDoc tag @var has invalid value#'
+		- '#no value type specified in iterable type array#'
+		- '#PHPDoc tag @var has invalid value#'
+		- identifier: function.alreadyNarrowedType
