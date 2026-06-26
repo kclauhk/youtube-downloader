@@ -375,7 +375,7 @@ class YouTubeDownloader
 
         if (count($client_ids) > 1) {
             // sorting order:   combined (smaller itag first)
-            //                  >> video (higher resolution >> smaller itag)
+            //                  >> video (higher resolution >> smaller itag first)
             //                  >> audio (lower quality first)
             usort(
                 $links,
@@ -388,17 +388,28 @@ class YouTubeDownloader
                                     : str_replace(['_','D','H'], ['L','M','S'], substr($b->audioQuality, -4, 1)))
                               ?: $b->height <=> $a->height
                               ?: $a->itag <=> $b->itag
-                              ?: $a->isDrc <=> $b->isDrc
+                              ?: $a->audioTrack <=> $b->audioTrack
+                              ?: $a->isVb <=> $b->isVb
+                              ?: $b->isDrc <=> $a->isDrc
                               ?: $b->_pref <=> $a->_pref
             );
-            // remove duplicated formats
+            // remove duplicate formats
             foreach ($links as $k => $v) {
-                if ($v->itag === ($i ?? 0) && $v->isDrc === ($c ?? false)) {
+                if (
+                    $v->itag === ($a ?? 0)
+                    && $v->audioTrack == ($b ?? [])
+                    && $v->isDrc === ($c ?? null)
+                    && $v->isVb === ($d ?? null)
+                    && $v->isSr === ($e ?? null)
+                ) {
                     unset($links[$k]);
                 } else {
                     unset($links[$k]->_pref);
-                    $i = $v->itag;
+                    $a = $v->itag;
+                    $b = $v->audioTrack;
                     $c = $v->isDrc;
+                    $d = $v->isVb;
+                    $e = $v->isSr;
                 }
             }
         }

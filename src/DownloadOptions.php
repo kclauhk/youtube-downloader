@@ -27,7 +27,7 @@ class DownloadOptions
         array $formats,
         array $streaming_urls = [null, null, null],
         ?VideoInfo $info = null,
-        ?array $captions = null,
+        ?array $captions = null
     ) {
         $this->formats = $formats;
         $this->info = $info;
