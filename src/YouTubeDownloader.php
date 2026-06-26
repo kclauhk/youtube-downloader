@@ -161,12 +161,6 @@ class YouTubeDownloader
             $context['client'][$k] = $v;
         }
 
-        if (strpos(print_r($configData, true), '&embeds_enable_encrypted_host_flags_enforcement=true') !== false) {
-            $encrypted_context = $configData->getEncryptedHostFlags();
-        } else {
-            $encrypted_context = null;
-        }
-
         $response = $this->client->post(
             'https://www.youtube.com/youtubei/v1/player?prettyPrint=false',
             json_encode(
@@ -179,7 +173,7 @@ class YouTubeDownloader
                                 [
                                     'html5Preference' => 'HTML5_PREF_WANTS',
                                     'signatureTimestamp' => $sig_timestamp,
-                                    'encryptedHostFlags' => $encrypted_context,
+                                    'encryptedHostFlags' => $configData->getEncryptedHostFlags(),
                                 ],
                                 function ($v) {
                                     return !is_null($v);
@@ -332,7 +326,7 @@ class YouTubeDownloader
 
         if (count($client_ids) > 1) {
             // sorting order:   combined (smaller itag first)
-            //                  >> video (higher resolution >> smaller itag)
+            //                  >> video (higher resolution >> smaller itag first)
             //                  >> audio (lower quality first)
             usort(
                 $links,
@@ -345,17 +339,28 @@ class YouTubeDownloader
                                     : str_replace(['_','D','H'], ['L','M','S'], substr($b->audioQuality, -4, 1)))
                               ?: $b->height <=> $a->height
                               ?: $a->itag <=> $b->itag
-                              ?: $a->isDrc <=> $b->isDrc
+                              ?: $a->audioTrack <=> $b->audioTrack
+                              ?: $a->isVb <=> $b->isVb
+                              ?: $b->isDrc <=> $a->isDrc
                               ?: $b->_pref <=> $a->_pref
             );
-            // remove duplicated formats
+            // remove duplicate formats
             foreach ($links as $k => $v) {
-                if ($v->itag === ($i ?? 0) && $v->isDrc === ($c ?? false)) {
+                if (
+                    $v->itag === ($a ?? 0)
+                    && $v->audioTrack == ($b ?? [])
+                    && $v->isDrc === ($c ?? null)
+                    && $v->isVb === ($d ?? null)
+                    && $v->isSr === ($e ?? null)
+                ) {
                     unset($links[$k]);
                 } else {
                     unset($links[$k]->_pref);
-                    $i = $v->itag;
+                    $a = $v->itag;
+                    $b = $v->audioTrack;
                     $c = $v->isDrc;
+                    $d = $v->isVb;
+                    $e = $v->isSr;
                 }
             }
         }

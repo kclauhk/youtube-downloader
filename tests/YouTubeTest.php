@@ -13,10 +13,10 @@ class YouTubeTest extends TestCase
         $browser = new Browser();
 
         // set cookies
-        $browser->get('https://httpbin.org/cookies/set?name=random_value');
+        $browser->get('https://httpbingo.org/cookies/set?name=random_value');
 
         // list cookies
-        $list = $browser->get('https://httpbin.org/cookies');
+        $list = $browser->get('https://httpbingo.org/cookies');
 
         $this->assertStringContainsString('random_value', $list->body);
     }
