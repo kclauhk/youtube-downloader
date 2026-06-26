@@ -180,12 +180,6 @@ class YouTubeDownloader
             $context['client'][$k] = $v;
         }
 
-        if (strpos(print_r($configData, true), '&embeds_enable_encrypted_host_flags_enforcement=true') !== false) {
-            $encrypted_context = $configData->getEncryptedHostFlags();
-        } else {
-            $encrypted_context = null;
-        }
-
         $response = $this->client->post(
             'https://www.youtube.com/youtubei/v1/player?prettyPrint=false',
             json_encode(
@@ -198,7 +192,7 @@ class YouTubeDownloader
                                 [
                                     'html5Preference' => 'HTML5_PREF_WANTS',
                                     'signatureTimestamp' => $sig_timestamp,
-                                    'encryptedHostFlags' => $encrypted_context,
+                                    'encryptedHostFlags' => $configData->getEncryptedHostFlags(),
                                 ],
                                 function ($v) {
                                     return !is_null($v);
