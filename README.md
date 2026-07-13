@@ -51,16 +51,18 @@ composer require kclauhk/youtube-downloader "~4.1.2"
   ```
 (The old way to specify the player client(s) remains valid)
 
-### DASH/HLS manifest (available in ~~"ios" and~~ live streams)
-To get the URL of the DASH/HLS manifest  
+### DASH/HLS manifest (available in "visionos" and live streams)
+To get the URL of the HLS manifest  
 ```php
 $manifestUrl = $downloadOptions->getHlsManifestUrl();
-
+```
+To get the URL of the DASH manifest of live stream with `android_vr`  
+```php
 $manifestUrl = $downloadOptions->getDashManifestUrl();
 ```
 
 ### player client can be added/modified
-The currently available client is `android_vr`.
+The currently available clients are `android_vr` and `visionos`.
 You can add additional clients/modify the built-in clients by:  
   `$youtube->getApiClients()->setClient($clientId, $context);`
 - `$clientId` - ID of the player client

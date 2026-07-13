@@ -62,6 +62,21 @@ class PlayerApiClients
                 'supports_cookies' => false,
             ],
             */
+            'visionos' => [
+                'context' => [
+                    'client' => [
+                        'clientName' => 'VISIONOS',
+                        'clientVersion' => '1.02',
+                        'deviceMake' => 'Apple',
+                        'deviceModel' => 'RealityDevice17,1',
+                        'userAgent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5.2 Safari/605.1.15',
+                        'osName' => 'visionOS',
+                        'osVersion' => '26.5.23O471',
+                    ],
+                ],
+                'client_name' => 101,
+                'supports_cookies' => false,
+            ],
         ];
     }
 
