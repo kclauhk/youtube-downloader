@@ -58,11 +58,13 @@ composer require kclauhk/youtube-downloader "~4.1.2"
   ```
 (The old way to specify the player client(s) remains valid)
 
-### DASH/HLS manifest (available in "web" and live streams)
-To get the URL of the DASH/HLS manifest  
+### DASH/HLS manifest (available in "visionos", "web" **cookies required*, and live streams)
+To get the URL of the HLS manifest  
 ```php
 $manifestUrl = $downloadOptions->getHlsManifestUrl();
-
+```
+To get the URL of the DASH manifest of live stream with `android_vr`  
+```php
 $manifestUrl = $downloadOptions->getDashManifestUrl();
 ```
 (For private/age-restricted videos, fetching the manifest (.m3u8) and MPEG-TS segments requires the same set of cookies)
@@ -78,7 +80,7 @@ You may use other JS runtimes. [Here](https://github.com/kclauhk/youtube-downloa
 Hence, "TVHTML5", which requires n deciphering, is added (client ID: `tv`) and is set as default client if a JS runtime is available.  
 
 ### player client can be added/modified
-The currently available clients are `android_vr`, `tv`, `web` (Safari user agent) and `web_embedded`.
+The currently available clients are `android_vr`, `tv`, `visionos`, `web` (Safari user agent) and `web_embedded`.
 You can add additional clients/modify the built-in clients by:  
   `$youtube->getApiClients()->setClient($clientId, $context);`
 - `$clientId` - ID of the player client

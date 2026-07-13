@@ -66,20 +66,35 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'TVHTML5',
-                        'clientVersion' => '7.20260624.14.00',
+                        'clientVersion' => '5.20260707',
                         'userAgent' => 'Mozilla/5.0 (ChromiumStylePlatform) Cobalt/Version',
                     ],
                 ],
                 'client_name' => 7,
-                'config_url' => 'https://www.youtube.com/tv',
+                //'config_url' => 'https://www.youtube.com/tv',
                 'supports_cookies' => true,
+            ],
+            'visionos' => [
+                'context' => [
+                    'client' => [
+                        'clientName' => 'VISIONOS',
+                        'clientVersion' => '1.02',
+                        'deviceMake' => 'Apple',
+                        'deviceModel' => 'RealityDevice17,1',
+                        'userAgent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5.2 Safari/605.1.15',
+                        'osName' => 'visionOS',
+                        'osVersion' => '26.5.23O471',
+                    ],
+                ],
+                'client_name' => 101,
+                'supports_cookies' => false,
             ],
             'web' => [       // "web" client with Safari UA provides muxed HLS formats
                 'context' => [
                     'client' => [
                         'clientName' => 'WEB',
-                        'clientVersion' => '2.20260625.01.00',
-                        'userAgent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.3 Safari/605.1.15',
+                        'clientVersion' => '2.20260708.00.00',
+                        'userAgent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5.2 Safari/605.1.15',
                     ],
                 ],
                 'client_name' => 1,
@@ -90,7 +105,7 @@ class PlayerApiClients
                 'context' => [
                     'client' => [
                         'clientName' => 'WEB_EMBEDDED_PLAYER',
-                        'clientVersion' => '2.20260625.01.00',
+                        'clientVersion' => '2.20260708.00.00',
                     ],
                     'thirdParty' => [
                         'embedUrl' => 'https://www.reddit.com/',
