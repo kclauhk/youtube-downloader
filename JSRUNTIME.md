@@ -43,7 +43,6 @@ _(Note: It is highly recommended to enable the zlib extension)_
    echo hash("sha3-384", hash("sha3-512", "put your API key here"));
    ```
 2. sign in to [Deno Deploy](https://console.deno.com/login)  
-   _(you may use [Deploy Classic](https://dash.deno.com/login) [https://dash.deno.com](https://dash.deno.com) which is much faster IMO)_
 3. create a **New Playground**
 4. copy and paste the following code into the Playground _(remove all existing code)_
 5. put the hash value into the code
@@ -64,11 +63,11 @@ import zlib from "node:zlib";
 const { createHash } = await import('node:crypto');
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") {
-    return new Response('Method Not Allowed', { status: 405 });
+    return new Response('Hello, World!');
   } else {
     const hash = 'put the hash value of the API key here';
     const token = req.headers.get('x-token');
-    if (createHash('sha3-384').update(token).digest('hex') != hash)
+    if (token == null || createHash('sha3-384').update(token).digest('hex') != hash)
       return new Response('Forbidden', { status: 403 });
   }
   if (req.body) {
