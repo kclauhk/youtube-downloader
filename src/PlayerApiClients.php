@@ -28,7 +28,6 @@ class PlayerApiClients
                 'client_name' => 3,
                 'supports_cookies' => false,
             ],
-            */
             'android_vr' => [
                 'context' => [
                     'client' => [
@@ -45,7 +44,6 @@ class PlayerApiClients
                 'client_name' => 28,
                 'supports_cookies' => false,
             ],
-            /*
             'ios' => [       // no longer offers HLS formats
                 'context' => [
                     'client' => [

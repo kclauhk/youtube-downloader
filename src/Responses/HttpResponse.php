@@ -17,7 +17,7 @@ abstract class HttpResponse
     public function __construct(Response $response)
     {
         $this->response = $response;
-        $this->json = json_decode($response->body, true);
+        $this->json = json_decode($response->body ?? '', true);
     }
 
     public function getResponse(): Response

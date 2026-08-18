@@ -235,7 +235,7 @@ class YouTubeDownloader
         }
 
         $clients = $this->api_clients::$clients;
-        $client_ids = ['android_vr'];
+        $client_ids = ['visionos'];
         $lang = null;
         if ($extra) {
             if (is_array($extra)) {
