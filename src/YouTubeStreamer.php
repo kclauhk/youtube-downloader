@@ -104,10 +104,14 @@ class YouTubeStreamer
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
         curl_setopt($ch, CURLOPT_HEADER, false);
 
-        curl_setopt($ch, CURLOPT_HEADERFUNCTION, [$this, 'headerCallback']);
+        /** @var callable(object|resource, string): int $headerCallback */
+        $headerCallback = [$this, 'headerCallback'];
+        curl_setopt($ch, CURLOPT_HEADERFUNCTION, $headerCallback);
 
         // if response is empty - this never gets called
-        curl_setopt($ch, CURLOPT_WRITEFUNCTION, [$this, 'bodyCallback']);
+        /** @var callable(object|resource, string): int $bodyCallback */
+        $bodyCallback = [$this, 'bodyCallback'];
+        curl_setopt($ch, CURLOPT_WRITEFUNCTION, $bodyCallback);
 
         if (!empty($this->options)) {
             curl_setopt_array($ch, $this->options);
