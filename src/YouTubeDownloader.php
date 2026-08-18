@@ -281,19 +281,10 @@ class YouTubeDownloader
             }
         }
         if (empty($client_ids)) {
-            if (
-                (function () {
-                    try {
-                        return (new JsRuntime())->getApp();
-                    } catch (YouTubeException $e) {
-                        return false;
-                    }
-                })()
-                || preg_match(self::REGEX_SID['SAPISID'], $this->client->getCookies(), $matches)
-            ) {
-                $client_ids = ['tv'];
+            if (preg_match(self::REGEX_SID['SAPISID'], $this->client->getCookies(), $matches)) {
+                $client_ids = ['visionos', 'web_embedded'];
             } else {
-                $client_ids = ['android_vr'];
+                $client_ids = ['visionos'];
             }
         }
 
