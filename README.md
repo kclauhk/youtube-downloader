@@ -54,19 +54,19 @@ composer require kclauhk/youtube-downloader "~4.1.2"
   ```
 - To specify the desired language and player client
   ```php
-  $downloadOptions = $youtube->getDownloadLinks($url, ['client'=>'android', 'lang'=>'fr']);
+  $downloadOptions = $youtube->getDownloadLinks($url, ['client'=>'visionos', 'lang'=>'fr']);
   ```
 (The old way to specify the player client(s) remains valid)
 
-### DASH/HLS manifest (available in "visionos", "web" **cookies required*, and live streams)
+### ~~DASH~~/HLS manifest (available in "visionos", "web" **cookies required*, and live streams)
 To get the URL of the HLS manifest  
 ```php
 $manifestUrl = $downloadOptions->getHlsManifestUrl();
 ```
-To get the URL of the DASH manifest of live stream with `android_vr`  
-```php
-$manifestUrl = $downloadOptions->getDashManifestUrl();
-```
+~~To get the URL of the DASH manifest of live stream with `android_vr`~~  
+
+> ~~`$manifestUrl = $downloadOptions->getDashManifestUrl();`~~
+
 (For private/age-restricted videos, fetching the manifest (.m3u8) and MPEG-TS segments requires the same set of cookies)
 
 ### n/sig deciphering is supported
@@ -80,7 +80,7 @@ You may use other JS runtimes. [Here](https://github.com/kclauhk/youtube-downloa
 Hence, "TVHTML5", which requires n deciphering, is added (client ID: `tv`) and is set as default client if a JS runtime is available.  
 
 ### player client can be added/modified
-The currently available clients are `android_vr`, `tv`, `visionos`, `web` (Safari user agent) and `web_embedded`.
+The currently available clients are ~~`android_vr`~~, `tv`, `visionos`, `web` (Safari user agent) and `web_embedded`.
 You can add additional clients/modify the built-in clients by:  
   `$youtube->getApiClients()->setClient($clientId, $context);`
 - `$clientId` - ID of the player client
@@ -104,7 +104,7 @@ You can add additional clients/modify the built-in clients by:
   (client which requires a PO token is not supported)
 
 ### Changes since [v4.1.0](https://github.com/kclauhk/youtube-downloader/releases/tag/v4.1.0)
-- Two YouTube clients (client ID: "android_vr" ~~and "ios"~~) are built into YouTubeDownloader
+- Two YouTube clients (client ID: ~~"android_vr" and "ios"~~) are built into YouTubeDownloader
   - To specify a player client
     ```php
     $downloadOptions = $youtube->getDownloadLinks($url, $clientId);

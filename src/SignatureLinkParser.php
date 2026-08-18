@@ -154,7 +154,7 @@ class SignatureLinkParser
                         $streamUrl->url = $ciphers[$k][2];
                         if (!empty($error)) {
                             // @phpstan-ignore property.notFound
-                            $streamUrl->_error[] = $error;
+                            $streamUrl->_error[] = "{$error} (s)";
                         }
                     }
                 } elseif (empty($format['url'])) {
@@ -170,7 +170,7 @@ class SignatureLinkParser
                         );
                     } elseif (!empty($error)) {
                         // @phpstan-ignore property.notFound
-                        $streamUrl->_error[] = $error;
+                        $streamUrl->_error[] = "{$error} (n)";
                     }
                 }
 
